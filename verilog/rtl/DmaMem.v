@@ -595,14 +595,14 @@ module Axi4SharedWishboneOnChipRam (
   reg        [31:0]   _zz_9;
   reg        [11:0]   _zz_10;
   wire                _zz_11;
-  wire       [2:0]    _zz_12;
+  wire       [5:0]    _zz_12;
   wire       [1:0]    _zz_13;
   wire       [11:0]   _zz_14;
   wire       [11:0]   _zz_15;
   wire       [11:0]   _zz_16;
   wire       [2:0]    _zz_17;
   wire       [2:0]    _zz_18;
-  wire       [2:0]    _zz_19;
+  wire       [5:0]    _zz_19;
   reg                 wbArea_memRdyReg;
   wire                wbArea_wbVld;
   wire       [31:0]   _zz_1;
@@ -661,10 +661,10 @@ module Axi4SharedWishboneOnChipRam (
   reg        [2:0]    axiArea_stage0_m2sPipe_rData_fragment_size;
   reg        [1:0]    axiArea_stage0_m2sPipe_rData_fragment_burst;
   reg                 axiArea_stage0_m2sPipe_rData_fragment_write;
-  reg [7:0] ram_symbol0 [0:7];
-  reg [7:0] ram_symbol1 [0:7];
-  reg [7:0] ram_symbol2 [0:7];
-  reg [7:0] ram_symbol3 [0:7];
+  reg [7:0] ram_symbol0 [0:63];
+  reg [7:0] ram_symbol1 [0:63];
+  reg [7:0] ram_symbol2 [0:63];
+  reg [7:0] ram_symbol3 [0:63];
   reg [7:0] _zz_20;
   reg [7:0] _zz_21;
   reg [7:0] _zz_22;
@@ -675,14 +675,14 @@ module Axi4SharedWishboneOnChipRam (
   reg [7:0] _zz_27;
 
   assign _zz_11 = (io_axi_arw_payload_len == 8'h0);
-  assign _zz_12 = _zz_1[2:0];
+  assign _zz_12 = _zz_1[5:0];
   assign _zz_13 = {(2'b01 < Axi4Incr_validSize),(2'b00 < Axi4Incr_validSize)};
   assign _zz_14 = unburstify_buffer_transaction_addr[11 : 0];
   assign _zz_15 = _zz_14;
   assign _zz_16 = {9'd0, Axi4Incr_sizeValue};
   assign _zz_17 = {1'd0, Axi4Incr_validSize};
   assign _zz_18 = {1'd0, _zz_3};
-  assign _zz_19 = _zz_5[2:0];
+  assign _zz_19 = _zz_5[5:0];
   always @ (*) begin
     _zz_8 = {_zz_23, _zz_22, _zz_21, _zz_20};
   end
