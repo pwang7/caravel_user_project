@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.4.3    git head : 4dd3b62906925bc269aee976e75f8918d4132efb
 // Component : DmaMem
-// Git hash  : 56966e3bef1799ddcd271cea346e841ca3728d43
+// Git hash  : f48be781e668caa4d53186beb7dec459d98a9f2d
 
 
 `define fsmR_enumDefinition_binary_sequential_type [2:0]
@@ -18,8 +18,57 @@
 `define fsmW_enumDefinition_binary_sequential_fsmW_LAST 3'b011
 `define fsmW_enumDefinition_binary_sequential_fsmW_B 3'b100
 
+`define readFsm_enumDefinition_binary_sequential_type [1:0]
+`define readFsm_enumDefinition_binary_sequential_readFsm_BOOT 2'b00
+`define readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE 2'b01
+`define readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD 2'b10
+`define readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ 2'b11
+
+`define initFsm_enumDefinition_binary_sequential_type [2:0]
+`define initFsm_enumDefinition_binary_sequential_initFsm_BOOT 3'b000
+`define initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT 3'b001
+`define initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE 3'b010
+`define initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1 3'b011
+`define initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2 3'b100
+`define initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG 3'b101
+
+`define refreshFsm_enumDefinition_binary_sequential_type [1:0]
+`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT 2'b00
+`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE 2'b01
+`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH 2'b10
+
+`define writeFsm_enumDefinition_binary_sequential_type [1:0]
+`define writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT 2'b00
+`define writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE 2'b01
+`define writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE 2'b10
+`define writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE 2'b11
+
+`define fsm_enumDefinition_binary_sequential_type [2:0]
+`define fsm_enumDefinition_binary_sequential_fsm_BOOT 3'b000
+`define fsm_enumDefinition_binary_sequential_fsm_INIT 3'b001
+`define fsm_enumDefinition_binary_sequential_fsm_IDLE 3'b010
+`define fsm_enumDefinition_binary_sequential_fsm_REFRESH 3'b011
+`define fsm_enumDefinition_binary_sequential_fsm_WRITE 3'b100
+`define fsm_enumDefinition_binary_sequential_fsm_READ 3'b101
+`define fsm_enumDefinition_binary_sequential_fsm_PRECHARGE 3'b110
+
 
 module DmaMem (
+  input               io_ctrl_start,
+  output              io_ctrl_busy,
+  output              io_ctrl_done,
+  input               io_ctrl_halt,
+  output     [12:0]   io_sdram_ADDR,
+  output     [1:0]    io_sdram_BA,
+  input      [15:0]   io_sdram_DQ_read,
+  output     [15:0]   io_sdram_DQ_write,
+  output     [15:0]   io_sdram_DQ_writeEnable,
+  output     [1:0]    io_sdram_DQM,
+  output              io_sdram_CASn,
+  output              io_sdram_CKE,
+  output              io_sdram_CSn,
+  output              io_sdram_RASn,
+  output              io_sdram_WEn,
   input               io_wb_CYC,
   input               io_wb_STB,
   output              io_wb_ACK,
@@ -28,35 +77,18 @@ module DmaMem (
   output     [31:0]   io_wb_DAT_MISO,
   input      [31:0]   io_wb_DAT_MOSI,
   input      [3:0]    io_wb_SEL,
-  input               io_ctrl_start,
-  output              io_ctrl_busy,
-  output              io_ctrl_done,
-  input               io_ctrl_halt,
   input               clk,
   input               reset
 );
-  wire                _zz_1;
+  wire       [31:0]   _zz_1;
   wire       [31:0]   _zz_2;
-  wire       [31:0]   _zz_3;
+  wire       [7:0]    _zz_3;
   wire       [7:0]    _zz_4;
   wire       [7:0]    _zz_5;
   wire       [7:0]    _zz_6;
-  wire       [7:0]    _zz_7;
-  wire       [31:0]   _zz_8;
+  wire       [31:0]   _zz_7;
+  wire                _zz_8;
   wire                _zz_9;
-  wire                _zz_10;
-  wire                mem_io_axi_arw_ready;
-  wire                mem_io_axi_w_ready;
-  wire                mem_io_axi_b_valid;
-  wire       [3:0]    mem_io_axi_b_payload_id;
-  wire       [1:0]    mem_io_axi_b_payload_resp;
-  wire                mem_io_axi_r_valid;
-  wire       [31:0]   mem_io_axi_r_payload_data;
-  wire       [3:0]    mem_io_axi_r_payload_id;
-  wire       [1:0]    mem_io_axi_r_payload_resp;
-  wire                mem_io_axi_r_payload_last;
-  wire       [31:0]   mem_io_wb_DAT_MISO;
-  wire                mem_io_wb_ACK;
   wire                dmaArea_dma_io_axi_ar_valid;
   wire       [31:0]   dmaArea_dma_io_axi_ar_payload_addr;
   wire       [3:0]    dmaArea_dma_io_axi_ar_payload_id;
@@ -77,32 +109,28 @@ module DmaMem (
   wire                dmaArea_dma_io_axi_b_ready;
   wire                dmaArea_dma_io_ctrl_busy;
   wire                dmaArea_dma_io_ctrl_done;
-  wire                streamArbiter_1_io_inputs_0_ready;
-  wire                streamArbiter_1_io_inputs_1_ready;
-  wire                streamArbiter_1_io_output_valid;
-  wire       [31:0]   streamArbiter_1_io_output_payload_addr;
-  wire       [3:0]    streamArbiter_1_io_output_payload_id;
-  wire       [7:0]    streamArbiter_1_io_output_payload_len;
-  wire       [2:0]    streamArbiter_1_io_output_payload_size;
-  wire       [1:0]    streamArbiter_1_io_output_payload_burst;
-  wire       [0:0]    streamArbiter_1_io_chosen;
-  wire       [1:0]    streamArbiter_1_io_chosenOH;
-  wire                wishbone_CYC;
-  wire                wishbone_STB;
-  wire                wishbone_ACK;
-  wire                wishbone_WE;
-  wire       [31:0]   wishbone_ADR;
-  wire       [31:0]   wishbone_DAT_MISO;
-  wire       [31:0]   wishbone_DAT_MOSI;
-  wire       [3:0]    wishbone_SEL;
-  wire                wbEmpty_CYC;
-  wire                wbEmpty_STB;
-  wire                wbEmpty_ACK;
-  wire                wbEmpty_WE;
-  wire       [31:0]   wbEmpty_ADR;
-  wire       [31:0]   wbEmpty_DAT_MISO;
-  wire       [31:0]   wbEmpty_DAT_MOSI;
-  wire       [3:0]    wbEmpty_SEL;
+  wire                sdramArea_sdramController_io_axi_ar_ready;
+  wire                sdramArea_sdramController_io_axi_aw_ready;
+  wire                sdramArea_sdramController_io_axi_w_ready;
+  wire                sdramArea_sdramController_io_axi_r_valid;
+  wire       [31:0]   sdramArea_sdramController_io_axi_r_payload_data;
+  wire       [3:0]    sdramArea_sdramController_io_axi_r_payload_id;
+  wire       [1:0]    sdramArea_sdramController_io_axi_r_payload_resp;
+  wire                sdramArea_sdramController_io_axi_r_payload_last;
+  wire                sdramArea_sdramController_io_axi_b_valid;
+  wire       [3:0]    sdramArea_sdramController_io_axi_b_payload_id;
+  wire       [1:0]    sdramArea_sdramController_io_axi_b_payload_resp;
+  wire       [12:0]   sdramArea_sdramController_io_sdram_ADDR;
+  wire       [1:0]    sdramArea_sdramController_io_sdram_BA;
+  wire                sdramArea_sdramController_io_sdram_CASn;
+  wire                sdramArea_sdramController_io_sdram_CKE;
+  wire                sdramArea_sdramController_io_sdram_CSn;
+  wire       [1:0]    sdramArea_sdramController_io_sdram_DQM;
+  wire                sdramArea_sdramController_io_sdram_RASn;
+  wire                sdramArea_sdramController_io_sdram_WEn;
+  wire       [15:0]   sdramArea_sdramController_io_sdram_DQ_write;
+  wire       [15:0]   sdramArea_sdramController_io_sdram_DQ_writeEnable;
+  wire                sdramArea_sdramController_io_initDone;
   reg                 busif_readError;
   reg        [31:0]   busif_readData;
   wire                busif_selMatch;
@@ -110,164 +138,150 @@ module DmaMem (
   wire                busif_askRead;
   wire                busif_doWrite;
   wire                busif_doRead;
-  wire       [31:0]   srcAddr;
-  wire       [31:0]   dstAddr;
+  reg        [31:0]   srcAddr;
+  reg        [31:0]   dstAddr;
 
-  Axi4SharedWishboneOnChipRam mem (
-    .io_axi_arw_valid            (streamArbiter_1_io_output_valid               ), //i
-    .io_axi_arw_ready            (mem_io_axi_arw_ready                          ), //o
-    .io_axi_arw_payload_addr     (streamArbiter_1_io_output_payload_addr[31:0]  ), //i
-    .io_axi_arw_payload_id       (streamArbiter_1_io_output_payload_id[3:0]     ), //i
-    .io_axi_arw_payload_len      (streamArbiter_1_io_output_payload_len[7:0]    ), //i
-    .io_axi_arw_payload_size     (streamArbiter_1_io_output_payload_size[2:0]   ), //i
-    .io_axi_arw_payload_burst    (streamArbiter_1_io_output_payload_burst[1:0]  ), //i
-    .io_axi_arw_payload_write    (_zz_1                                         ), //i
-    .io_axi_w_valid              (dmaArea_dma_io_axi_w_valid                    ), //i
-    .io_axi_w_ready              (mem_io_axi_w_ready                            ), //o
-    .io_axi_w_payload_data       (dmaArea_dma_io_axi_w_payload_data[31:0]       ), //i
-    .io_axi_w_payload_strb       (dmaArea_dma_io_axi_w_payload_strb[3:0]        ), //i
-    .io_axi_w_payload_last       (dmaArea_dma_io_axi_w_payload_last             ), //i
-    .io_axi_b_valid              (mem_io_axi_b_valid                            ), //o
-    .io_axi_b_ready              (dmaArea_dma_io_axi_b_ready                    ), //i
-    .io_axi_b_payload_id         (mem_io_axi_b_payload_id[3:0]                  ), //o
-    .io_axi_b_payload_resp       (mem_io_axi_b_payload_resp[1:0]                ), //o
-    .io_axi_r_valid              (mem_io_axi_r_valid                            ), //o
-    .io_axi_r_ready              (dmaArea_dma_io_axi_r_ready                    ), //i
-    .io_axi_r_payload_data       (mem_io_axi_r_payload_data[31:0]               ), //o
-    .io_axi_r_payload_id         (mem_io_axi_r_payload_id[3:0]                  ), //o
-    .io_axi_r_payload_resp       (mem_io_axi_r_payload_resp[1:0]                ), //o
-    .io_axi_r_payload_last       (mem_io_axi_r_payload_last                     ), //o
-    .io_wb_CYC                   (io_wb_CYC                                     ), //i
-    .io_wb_STB                   (io_wb_STB                                     ), //i
-    .io_wb_ACK                   (mem_io_wb_ACK                                 ), //o
-    .io_wb_WE                    (io_wb_WE                                      ), //i
-    .io_wb_ADR                   (io_wb_ADR[31:0]                               ), //i
-    .io_wb_DAT_MISO              (mem_io_wb_DAT_MISO[31:0]                      ), //o
-    .io_wb_DAT_MOSI              (io_wb_DAT_MOSI[31:0]                          ), //i
-    .io_wb_SEL                   (io_wb_SEL[3:0]                                ), //i
-    .clk                         (clk                                           ), //i
-    .reset                       (reset                                         )  //i
-  );
   Dma dmaArea_dma (
-    .io_param_sar               (_zz_2[31:0]                               ), //i
-    .io_param_dar               (_zz_3[31:0]                               ), //i
-    .io_param_xsize             (_zz_4[7:0]                                ), //i
-    .io_param_ysize             (_zz_5[7:0]                                ), //i
-    .io_param_srcystep          (_zz_6[7:0]                                ), //i
-    .io_param_dstystep          (_zz_7[7:0]                                ), //i
-    .io_param_llr               (_zz_8[31:0]                               ), //i
-    .io_param_bf                (_zz_9                                     ), //i
-    .io_param_cf                (_zz_10                                    ), //i
-    .io_axi_aw_valid            (dmaArea_dma_io_axi_aw_valid               ), //o
-    .io_axi_aw_ready            (streamArbiter_1_io_inputs_1_ready         ), //i
-    .io_axi_aw_payload_addr     (dmaArea_dma_io_axi_aw_payload_addr[31:0]  ), //o
-    .io_axi_aw_payload_id       (dmaArea_dma_io_axi_aw_payload_id[3:0]     ), //o
-    .io_axi_aw_payload_len      (dmaArea_dma_io_axi_aw_payload_len[7:0]    ), //o
-    .io_axi_aw_payload_size     (dmaArea_dma_io_axi_aw_payload_size[2:0]   ), //o
-    .io_axi_aw_payload_burst    (dmaArea_dma_io_axi_aw_payload_burst[1:0]  ), //o
-    .io_axi_w_valid             (dmaArea_dma_io_axi_w_valid                ), //o
-    .io_axi_w_ready             (mem_io_axi_w_ready                        ), //i
-    .io_axi_w_payload_data      (dmaArea_dma_io_axi_w_payload_data[31:0]   ), //o
-    .io_axi_w_payload_strb      (dmaArea_dma_io_axi_w_payload_strb[3:0]    ), //o
-    .io_axi_w_payload_last      (dmaArea_dma_io_axi_w_payload_last         ), //o
-    .io_axi_b_valid             (mem_io_axi_b_valid                        ), //i
-    .io_axi_b_ready             (dmaArea_dma_io_axi_b_ready                ), //o
-    .io_axi_b_payload_id        (mem_io_axi_b_payload_id[3:0]              ), //i
-    .io_axi_b_payload_resp      (mem_io_axi_b_payload_resp[1:0]            ), //i
-    .io_axi_ar_valid            (dmaArea_dma_io_axi_ar_valid               ), //o
-    .io_axi_ar_ready            (streamArbiter_1_io_inputs_0_ready         ), //i
-    .io_axi_ar_payload_addr     (dmaArea_dma_io_axi_ar_payload_addr[31:0]  ), //o
-    .io_axi_ar_payload_id       (dmaArea_dma_io_axi_ar_payload_id[3:0]     ), //o
-    .io_axi_ar_payload_len      (dmaArea_dma_io_axi_ar_payload_len[7:0]    ), //o
-    .io_axi_ar_payload_size     (dmaArea_dma_io_axi_ar_payload_size[2:0]   ), //o
-    .io_axi_ar_payload_burst    (dmaArea_dma_io_axi_ar_payload_burst[1:0]  ), //o
-    .io_axi_r_valid             (mem_io_axi_r_valid                        ), //i
-    .io_axi_r_ready             (dmaArea_dma_io_axi_r_ready                ), //o
-    .io_axi_r_payload_data      (mem_io_axi_r_payload_data[31:0]           ), //i
-    .io_axi_r_payload_id        (mem_io_axi_r_payload_id[3:0]              ), //i
-    .io_axi_r_payload_resp      (mem_io_axi_r_payload_resp[1:0]            ), //i
-    .io_axi_r_payload_last      (mem_io_axi_r_payload_last                 ), //i
-    .io_ctrl_start              (io_ctrl_start                             ), //i
-    .io_ctrl_busy               (dmaArea_dma_io_ctrl_busy                  ), //o
-    .io_ctrl_done               (dmaArea_dma_io_ctrl_done                  ), //o
-    .io_ctrl_halt               (io_ctrl_halt                              ), //i
-    .clk                        (clk                                       ), //i
-    .reset                      (reset                                     )  //i
+    .io_param_sar               (_zz_1[31:0]                                            ), //i
+    .io_param_dar               (_zz_2[31:0]                                            ), //i
+    .io_param_xsize             (_zz_3[7:0]                                             ), //i
+    .io_param_ysize             (_zz_4[7:0]                                             ), //i
+    .io_param_srcystep          (_zz_5[7:0]                                             ), //i
+    .io_param_dstystep          (_zz_6[7:0]                                             ), //i
+    .io_param_llr               (_zz_7[31:0]                                            ), //i
+    .io_param_bf                (_zz_8                                                  ), //i
+    .io_param_cf                (_zz_9                                                  ), //i
+    .io_axi_aw_valid            (dmaArea_dma_io_axi_aw_valid                            ), //o
+    .io_axi_aw_ready            (sdramArea_sdramController_io_axi_aw_ready              ), //i
+    .io_axi_aw_payload_addr     (dmaArea_dma_io_axi_aw_payload_addr[31:0]               ), //o
+    .io_axi_aw_payload_id       (dmaArea_dma_io_axi_aw_payload_id[3:0]                  ), //o
+    .io_axi_aw_payload_len      (dmaArea_dma_io_axi_aw_payload_len[7:0]                 ), //o
+    .io_axi_aw_payload_size     (dmaArea_dma_io_axi_aw_payload_size[2:0]                ), //o
+    .io_axi_aw_payload_burst    (dmaArea_dma_io_axi_aw_payload_burst[1:0]               ), //o
+    .io_axi_w_valid             (dmaArea_dma_io_axi_w_valid                             ), //o
+    .io_axi_w_ready             (sdramArea_sdramController_io_axi_w_ready               ), //i
+    .io_axi_w_payload_data      (dmaArea_dma_io_axi_w_payload_data[31:0]                ), //o
+    .io_axi_w_payload_strb      (dmaArea_dma_io_axi_w_payload_strb[3:0]                 ), //o
+    .io_axi_w_payload_last      (dmaArea_dma_io_axi_w_payload_last                      ), //o
+    .io_axi_b_valid             (sdramArea_sdramController_io_axi_b_valid               ), //i
+    .io_axi_b_ready             (dmaArea_dma_io_axi_b_ready                             ), //o
+    .io_axi_b_payload_id        (sdramArea_sdramController_io_axi_b_payload_id[3:0]     ), //i
+    .io_axi_b_payload_resp      (sdramArea_sdramController_io_axi_b_payload_resp[1:0]   ), //i
+    .io_axi_ar_valid            (dmaArea_dma_io_axi_ar_valid                            ), //o
+    .io_axi_ar_ready            (sdramArea_sdramController_io_axi_ar_ready              ), //i
+    .io_axi_ar_payload_addr     (dmaArea_dma_io_axi_ar_payload_addr[31:0]               ), //o
+    .io_axi_ar_payload_id       (dmaArea_dma_io_axi_ar_payload_id[3:0]                  ), //o
+    .io_axi_ar_payload_len      (dmaArea_dma_io_axi_ar_payload_len[7:0]                 ), //o
+    .io_axi_ar_payload_size     (dmaArea_dma_io_axi_ar_payload_size[2:0]                ), //o
+    .io_axi_ar_payload_burst    (dmaArea_dma_io_axi_ar_payload_burst[1:0]               ), //o
+    .io_axi_r_valid             (sdramArea_sdramController_io_axi_r_valid               ), //i
+    .io_axi_r_ready             (dmaArea_dma_io_axi_r_ready                             ), //o
+    .io_axi_r_payload_data      (sdramArea_sdramController_io_axi_r_payload_data[31:0]  ), //i
+    .io_axi_r_payload_id        (sdramArea_sdramController_io_axi_r_payload_id[3:0]     ), //i
+    .io_axi_r_payload_resp      (sdramArea_sdramController_io_axi_r_payload_resp[1:0]   ), //i
+    .io_axi_r_payload_last      (sdramArea_sdramController_io_axi_r_payload_last        ), //i
+    .io_ctrl_start              (io_ctrl_start                                          ), //i
+    .io_ctrl_busy               (dmaArea_dma_io_ctrl_busy                               ), //o
+    .io_ctrl_done               (dmaArea_dma_io_ctrl_done                               ), //o
+    .io_ctrl_halt               (io_ctrl_halt                                           ), //i
+    .clk                        (clk                                                    ), //i
+    .reset                      (reset                                                  )  //i
   );
-  StreamArbiter streamArbiter_1 (
-    .io_inputs_0_valid            (dmaArea_dma_io_axi_ar_valid                   ), //i
-    .io_inputs_0_ready            (streamArbiter_1_io_inputs_0_ready             ), //o
-    .io_inputs_0_payload_addr     (dmaArea_dma_io_axi_ar_payload_addr[31:0]      ), //i
-    .io_inputs_0_payload_id       (dmaArea_dma_io_axi_ar_payload_id[3:0]         ), //i
-    .io_inputs_0_payload_len      (dmaArea_dma_io_axi_ar_payload_len[7:0]        ), //i
-    .io_inputs_0_payload_size     (dmaArea_dma_io_axi_ar_payload_size[2:0]       ), //i
-    .io_inputs_0_payload_burst    (dmaArea_dma_io_axi_ar_payload_burst[1:0]      ), //i
-    .io_inputs_1_valid            (dmaArea_dma_io_axi_aw_valid                   ), //i
-    .io_inputs_1_ready            (streamArbiter_1_io_inputs_1_ready             ), //o
-    .io_inputs_1_payload_addr     (dmaArea_dma_io_axi_aw_payload_addr[31:0]      ), //i
-    .io_inputs_1_payload_id       (dmaArea_dma_io_axi_aw_payload_id[3:0]         ), //i
-    .io_inputs_1_payload_len      (dmaArea_dma_io_axi_aw_payload_len[7:0]        ), //i
-    .io_inputs_1_payload_size     (dmaArea_dma_io_axi_aw_payload_size[2:0]       ), //i
-    .io_inputs_1_payload_burst    (dmaArea_dma_io_axi_aw_payload_burst[1:0]      ), //i
-    .io_output_valid              (streamArbiter_1_io_output_valid               ), //o
-    .io_output_ready              (mem_io_axi_arw_ready                          ), //i
-    .io_output_payload_addr       (streamArbiter_1_io_output_payload_addr[31:0]  ), //o
-    .io_output_payload_id         (streamArbiter_1_io_output_payload_id[3:0]     ), //o
-    .io_output_payload_len        (streamArbiter_1_io_output_payload_len[7:0]    ), //o
-    .io_output_payload_size       (streamArbiter_1_io_output_payload_size[2:0]   ), //o
-    .io_output_payload_burst      (streamArbiter_1_io_output_payload_burst[1:0]  ), //o
-    .io_chosen                    (streamArbiter_1_io_chosen                     ), //o
-    .io_chosenOH                  (streamArbiter_1_io_chosenOH[1:0]              ), //o
-    .clk                          (clk                                           ), //i
-    .reset                        (reset                                         )  //i
+  SdramController sdramArea_sdramController (
+    .io_axi_aw_valid            (dmaArea_dma_io_axi_aw_valid                              ), //i
+    .io_axi_aw_ready            (sdramArea_sdramController_io_axi_aw_ready                ), //o
+    .io_axi_aw_payload_addr     (dmaArea_dma_io_axi_aw_payload_addr[31:0]                 ), //i
+    .io_axi_aw_payload_id       (dmaArea_dma_io_axi_aw_payload_id[3:0]                    ), //i
+    .io_axi_aw_payload_len      (dmaArea_dma_io_axi_aw_payload_len[7:0]                   ), //i
+    .io_axi_aw_payload_size     (dmaArea_dma_io_axi_aw_payload_size[2:0]                  ), //i
+    .io_axi_aw_payload_burst    (dmaArea_dma_io_axi_aw_payload_burst[1:0]                 ), //i
+    .io_axi_w_valid             (dmaArea_dma_io_axi_w_valid                               ), //i
+    .io_axi_w_ready             (sdramArea_sdramController_io_axi_w_ready                 ), //o
+    .io_axi_w_payload_data      (dmaArea_dma_io_axi_w_payload_data[31:0]                  ), //i
+    .io_axi_w_payload_strb      (dmaArea_dma_io_axi_w_payload_strb[3:0]                   ), //i
+    .io_axi_w_payload_last      (dmaArea_dma_io_axi_w_payload_last                        ), //i
+    .io_axi_b_valid             (sdramArea_sdramController_io_axi_b_valid                 ), //o
+    .io_axi_b_ready             (dmaArea_dma_io_axi_b_ready                               ), //i
+    .io_axi_b_payload_id        (sdramArea_sdramController_io_axi_b_payload_id[3:0]       ), //o
+    .io_axi_b_payload_resp      (sdramArea_sdramController_io_axi_b_payload_resp[1:0]     ), //o
+    .io_axi_ar_valid            (dmaArea_dma_io_axi_ar_valid                              ), //i
+    .io_axi_ar_ready            (sdramArea_sdramController_io_axi_ar_ready                ), //o
+    .io_axi_ar_payload_addr     (dmaArea_dma_io_axi_ar_payload_addr[31:0]                 ), //i
+    .io_axi_ar_payload_id       (dmaArea_dma_io_axi_ar_payload_id[3:0]                    ), //i
+    .io_axi_ar_payload_len      (dmaArea_dma_io_axi_ar_payload_len[7:0]                   ), //i
+    .io_axi_ar_payload_size     (dmaArea_dma_io_axi_ar_payload_size[2:0]                  ), //i
+    .io_axi_ar_payload_burst    (dmaArea_dma_io_axi_ar_payload_burst[1:0]                 ), //i
+    .io_axi_r_valid             (sdramArea_sdramController_io_axi_r_valid                 ), //o
+    .io_axi_r_ready             (dmaArea_dma_io_axi_r_ready                               ), //i
+    .io_axi_r_payload_data      (sdramArea_sdramController_io_axi_r_payload_data[31:0]    ), //o
+    .io_axi_r_payload_id        (sdramArea_sdramController_io_axi_r_payload_id[3:0]       ), //o
+    .io_axi_r_payload_resp      (sdramArea_sdramController_io_axi_r_payload_resp[1:0]     ), //o
+    .io_axi_r_payload_last      (sdramArea_sdramController_io_axi_r_payload_last          ), //o
+    .io_sdram_ADDR              (sdramArea_sdramController_io_sdram_ADDR[12:0]            ), //o
+    .io_sdram_BA                (sdramArea_sdramController_io_sdram_BA[1:0]               ), //o
+    .io_sdram_DQ_read           (io_sdram_DQ_read[15:0]                                   ), //i
+    .io_sdram_DQ_write          (sdramArea_sdramController_io_sdram_DQ_write[15:0]        ), //o
+    .io_sdram_DQ_writeEnable    (sdramArea_sdramController_io_sdram_DQ_writeEnable[15:0]  ), //o
+    .io_sdram_DQM               (sdramArea_sdramController_io_sdram_DQM[1:0]              ), //o
+    .io_sdram_CASn              (sdramArea_sdramController_io_sdram_CASn                  ), //o
+    .io_sdram_CKE               (sdramArea_sdramController_io_sdram_CKE                   ), //o
+    .io_sdram_CSn               (sdramArea_sdramController_io_sdram_CSn                   ), //o
+    .io_sdram_RASn              (sdramArea_sdramController_io_sdram_RASn                  ), //o
+    .io_sdram_WEn               (sdramArea_sdramController_io_sdram_WEn                   ), //o
+    .io_initDone                (sdramArea_sdramController_io_initDone                    ), //o
+    .clk                        (clk                                                      ), //i
+    .reset                      (reset                                                    )  //i
   );
-  assign wbEmpty_CYC = 1'b0;
-  assign wbEmpty_STB = 1'b0;
-  assign wbEmpty_WE = 1'b0;
-  assign wbEmpty_ADR = 32'h0;
-  assign wbEmpty_DAT_MOSI = 32'h0;
-  assign wbEmpty_SEL = 4'b0000;
-  assign wishbone_ACK = 1'b1;
-  assign wishbone_DAT_MISO = busif_readData;
-  assign busif_selMatch = wishbone_SEL[0];
-  assign busif_askWrite = (((busif_selMatch && wishbone_CYC) && wishbone_STB) && wishbone_WE);
-  assign busif_askRead = (((busif_selMatch && wishbone_CYC) && wishbone_STB) && (! wishbone_WE));
-  assign busif_doWrite = ((((busif_selMatch && wishbone_CYC) && wishbone_STB) && wishbone_ACK) && wishbone_WE);
-  assign busif_doRead = ((((busif_selMatch && wishbone_CYC) && wishbone_STB) && wishbone_ACK) && (! wishbone_WE));
-  assign io_wb_DAT_MISO = mem_io_wb_DAT_MISO;
-  assign io_wb_ACK = mem_io_wb_ACK;
-  assign wishbone_CYC = wbEmpty_CYC;
-  assign wishbone_ADR = wbEmpty_ADR;
-  assign wishbone_DAT_MOSI = wbEmpty_DAT_MOSI;
-  assign wbEmpty_DAT_MISO = wishbone_DAT_MISO;
-  assign wishbone_STB = wbEmpty_STB;
-  assign wishbone_WE = wbEmpty_WE;
-  assign wbEmpty_ACK = wishbone_ACK;
-  assign wishbone_SEL = wbEmpty_SEL;
-  assign srcAddr = 32'h00000ffb;
-  assign dstAddr = 32'h00002001;
-  assign _zz_1 = streamArbiter_1_io_chosenOH[1];
+  assign io_wb_ACK = 1'b1;
+  assign io_wb_DAT_MISO = busif_readData;
+  assign busif_selMatch = io_wb_SEL[0];
+  assign busif_askWrite = (((busif_selMatch && io_wb_CYC) && io_wb_STB) && io_wb_WE);
+  assign busif_askRead = (((busif_selMatch && io_wb_CYC) && io_wb_STB) && (! io_wb_WE));
+  assign busif_doWrite = ((((busif_selMatch && io_wb_CYC) && io_wb_STB) && io_wb_ACK) && io_wb_WE);
+  assign busif_doRead = ((((busif_selMatch && io_wb_CYC) && io_wb_STB) && io_wb_ACK) && (! io_wb_WE));
   assign io_ctrl_busy = dmaArea_dma_io_ctrl_busy;
   assign io_ctrl_done = dmaArea_dma_io_ctrl_done;
-  assign _zz_2 = srcAddr;
-  assign _zz_3 = dstAddr;
-  assign _zz_4 = 8'h08;
-  assign _zz_5 = 8'h01;
+  assign _zz_1 = srcAddr;
+  assign _zz_2 = dstAddr;
+  assign _zz_3 = 8'h08;
+  assign _zz_4 = 8'h01;
+  assign _zz_5 = 8'h0;
   assign _zz_6 = 8'h0;
-  assign _zz_7 = 8'h0;
-  assign _zz_8 = 32'h0;
+  assign _zz_7 = 32'h0;
+  assign _zz_8 = 1'b1;
   assign _zz_9 = 1'b1;
-  assign _zz_10 = 1'b1;
+  assign io_sdram_ADDR = sdramArea_sdramController_io_sdram_ADDR;
+  assign io_sdram_BA = sdramArea_sdramController_io_sdram_BA;
+  assign io_sdram_DQ_write = sdramArea_sdramController_io_sdram_DQ_write;
+  assign io_sdram_DQ_writeEnable = sdramArea_sdramController_io_sdram_DQ_writeEnable;
+  assign io_sdram_DQM = sdramArea_sdramController_io_sdram_DQM;
+  assign io_sdram_CASn = sdramArea_sdramController_io_sdram_CASn;
+  assign io_sdram_CKE = sdramArea_sdramController_io_sdram_CKE;
+  assign io_sdram_CSn = sdramArea_sdramController_io_sdram_CSn;
+  assign io_sdram_RASn = sdramArea_sdramController_io_sdram_RASn;
+  assign io_sdram_WEn = sdramArea_sdramController_io_sdram_WEn;
   always @ (posedge clk or posedge reset) begin
     if (reset) begin
       busif_readError <= 1'b0;
       busif_readData <= 32'h0;
+      srcAddr <= 32'h0;
+      dstAddr <= 32'h0;
     end else begin
+      if(((io_wb_ADR == 32'h0) && busif_doWrite))begin
+        srcAddr <= io_wb_DAT_MISO[31 : 0];
+      end
+      if(((io_wb_ADR == 32'h00000004) && busif_doWrite))begin
+        dstAddr <= io_wb_DAT_MISO[31 : 0];
+      end
       if(busif_doRead)begin
-        case(wishbone_ADR)
+        case(io_wb_ADR)
           32'h0 : begin
+            busif_readData <= srcAddr;
+            busif_readError <= 1'b0;
           end
           32'h00000004 : begin
+            busif_readData <= dstAddr;
+            busif_readError <= 1'b0;
           end
           default : begin
             busif_readData <= 32'h0;
@@ -281,92 +295,1062 @@ module DmaMem (
 
 endmodule
 
-module StreamArbiter (
-  input               io_inputs_0_valid,
-  output              io_inputs_0_ready,
-  input      [31:0]   io_inputs_0_payload_addr,
-  input      [3:0]    io_inputs_0_payload_id,
-  input      [7:0]    io_inputs_0_payload_len,
-  input      [2:0]    io_inputs_0_payload_size,
-  input      [1:0]    io_inputs_0_payload_burst,
-  input               io_inputs_1_valid,
-  output              io_inputs_1_ready,
-  input      [31:0]   io_inputs_1_payload_addr,
-  input      [3:0]    io_inputs_1_payload_id,
-  input      [7:0]    io_inputs_1_payload_len,
-  input      [2:0]    io_inputs_1_payload_size,
-  input      [1:0]    io_inputs_1_payload_burst,
-  output              io_output_valid,
-  input               io_output_ready,
-  output     [31:0]   io_output_payload_addr,
-  output     [3:0]    io_output_payload_id,
-  output     [7:0]    io_output_payload_len,
-  output     [2:0]    io_output_payload_size,
-  output     [1:0]    io_output_payload_burst,
-  output     [0:0]    io_chosen,
-  output     [1:0]    io_chosenOH,
+module SdramController (
+  (* IOB = "TRUE" *) input               io_axi_aw_valid,
+  (* IOB = "TRUE" *) output              io_axi_aw_ready,
+  (* IOB = "TRUE" *) input      [31:0]   io_axi_aw_payload_addr,
+  (* IOB = "TRUE" *) input      [3:0]    io_axi_aw_payload_id,
+  (* IOB = "TRUE" *) input      [7:0]    io_axi_aw_payload_len,
+  (* IOB = "TRUE" *) input      [2:0]    io_axi_aw_payload_size,
+  (* IOB = "TRUE" *) input      [1:0]    io_axi_aw_payload_burst,
+  (* IOB = "TRUE" *) input               io_axi_w_valid,
+  (* IOB = "TRUE" *) output              io_axi_w_ready,
+  (* IOB = "TRUE" *) input      [31:0]   io_axi_w_payload_data,
+  (* IOB = "TRUE" *) input      [3:0]    io_axi_w_payload_strb,
+  (* IOB = "TRUE" *) input               io_axi_w_payload_last,
+  (* IOB = "TRUE" *) output              io_axi_b_valid,
+  (* IOB = "TRUE" *) input               io_axi_b_ready,
+  (* IOB = "TRUE" *) output     [3:0]    io_axi_b_payload_id,
+  (* IOB = "TRUE" *) output     [1:0]    io_axi_b_payload_resp,
+  (* IOB = "TRUE" *) input               io_axi_ar_valid,
+  (* IOB = "TRUE" *) output              io_axi_ar_ready,
+  (* IOB = "TRUE" *) input      [31:0]   io_axi_ar_payload_addr,
+  (* IOB = "TRUE" *) input      [3:0]    io_axi_ar_payload_id,
+  (* IOB = "TRUE" *) input      [7:0]    io_axi_ar_payload_len,
+  (* IOB = "TRUE" *) input      [2:0]    io_axi_ar_payload_size,
+  (* IOB = "TRUE" *) input      [1:0]    io_axi_ar_payload_burst,
+  (* IOB = "TRUE" *) output              io_axi_r_valid,
+  (* IOB = "TRUE" *) input               io_axi_r_ready,
+  (* IOB = "TRUE" *) output     [31:0]   io_axi_r_payload_data,
+  (* IOB = "TRUE" *) output     [3:0]    io_axi_r_payload_id,
+  (* IOB = "TRUE" *) output     [1:0]    io_axi_r_payload_resp,
+  (* IOB = "TRUE" *) output              io_axi_r_payload_last,
+  (* IOB = "TRUE" *) output     [12:0]   io_sdram_ADDR,
+  (* IOB = "TRUE" *) output     [1:0]    io_sdram_BA,
+  (* IOB = "TRUE" *) input      [15:0]   io_sdram_DQ_read,
+  (* IOB = "TRUE" *) output     [15:0]   io_sdram_DQ_write,
+  (* IOB = "TRUE" *) output reg [15:0]   io_sdram_DQ_writeEnable,
+  (* IOB = "TRUE" *) output     [1:0]    io_sdram_DQM,
+  (* IOB = "TRUE" *) output              io_sdram_CASn,
+  (* IOB = "TRUE" *) output              io_sdram_CKE,
+  (* IOB = "TRUE" *) output              io_sdram_CSn,
+  (* IOB = "TRUE" *) output              io_sdram_RASn,
+  (* IOB = "TRUE" *) output              io_sdram_WEn,
+  (* IOB = "TRUE" *) output reg          io_initDone,
   input               clk,
   input               reset
 );
-  wire       [3:0]    _zz_6;
-  wire       [1:0]    _zz_7;
-  wire       [3:0]    _zz_8;
-  wire       [0:0]    _zz_9;
-  wire       [0:0]    _zz_10;
-  reg                 locked;
-  wire                maskProposal_0;
-  wire                maskProposal_1;
-  reg                 maskLocked_0;
-  reg                 maskLocked_1;
-  wire                maskRouted_0;
-  wire                maskRouted_1;
-  wire       [1:0]    _zz_1;
-  wire       [3:0]    _zz_2;
-  wire       [3:0]    _zz_3;
-  wire       [1:0]    _zz_4;
+  reg                 _zz_9;
+  wire                _zz_10;
+  reg                 _zz_11;
+  wire                _zz_12;
+  reg                 _zz_13;
+  wire       [1:0]    _zz_14;
+  wire                _zz_15;
+  reg                 _zz_16;
+  wire                _zz_17;
+  wire       [1:0]    _zz_18;
+  wire                _zz_19;
+  wire                awFifo_io_push_ready;
+  wire                awFifo_io_pop_valid;
+  wire       [31:0]   awFifo_io_pop_payload_addr;
+  wire       [3:0]    awFifo_io_pop_payload_id;
+  wire       [7:0]    awFifo_io_pop_payload_len;
+  wire       [2:0]    awFifo_io_pop_payload_size;
+  wire       [1:0]    awFifo_io_pop_payload_burst;
+  wire       [6:0]    awFifo_io_occupancy;
+  wire       [6:0]    awFifo_io_availability;
+  wire                wFifo_io_push_ready;
+  wire                wFifo_io_pop_valid;
+  wire       [31:0]   wFifo_io_pop_payload_data;
+  wire       [3:0]    wFifo_io_pop_payload_strb;
+  wire                wFifo_io_pop_payload_last;
+  wire       [6:0]    wFifo_io_occupancy;
+  wire       [6:0]    wFifo_io_availability;
+  wire                bFifo_io_push_ready;
+  wire                bFifo_io_pop_valid;
+  wire       [3:0]    bFifo_io_pop_payload_id;
+  wire       [1:0]    bFifo_io_pop_payload_resp;
+  wire       [6:0]    bFifo_io_occupancy;
+  wire       [6:0]    bFifo_io_availability;
+  wire                arFifo_io_push_ready;
+  wire                arFifo_io_pop_valid;
+  wire       [31:0]   arFifo_io_pop_payload_addr;
+  wire       [3:0]    arFifo_io_pop_payload_id;
+  wire       [7:0]    arFifo_io_pop_payload_len;
+  wire       [2:0]    arFifo_io_pop_payload_size;
+  wire       [1:0]    arFifo_io_pop_payload_burst;
+  wire       [6:0]    arFifo_io_occupancy;
+  wire       [6:0]    arFifo_io_availability;
+  wire                rFifo_io_push_ready;
+  wire                rFifo_io_pop_valid;
+  wire       [31:0]   rFifo_io_pop_payload_data;
+  wire       [3:0]    rFifo_io_pop_payload_id;
+  wire       [1:0]    rFifo_io_pop_payload_resp;
+  wire                rFifo_io_pop_payload_last;
+  wire       [6:0]    rFifo_io_occupancy;
+  wire       [6:0]    rFifo_io_availability;
+  wire                _zz_20;
+  wire                _zz_21;
+  wire                _zz_22;
+  wire                _zz_23;
+  wire                _zz_24;
+  wire                _zz_25;
+  wire                _zz_26;
+  wire                _zz_27;
+  wire                _zz_28;
+  wire       [0:0]    _zz_29;
+  wire       [9:0]    _zz_30;
+  wire       [7:0]    _zz_31;
+  wire       [7:0]    _zz_32;
+  wire       [8:0]    _zz_33;
+  wire       [13:0]   _zz_34;
+  wire       [7:0]    _zz_35;
+  wire       [1:0]    _zz_36;
+  wire       [15:0]   _zz_37;
+  wire       [8:0]    _zz_38;
+  wire       [13:0]   _zz_39;
+  wire       [7:0]    _zz_40;
+  wire       [3:0]    CMD_UNSELECTED;
+  wire       [3:0]    CMD_NOP;
+  wire       [3:0]    CMD_ACTIVE;
+  wire       [3:0]    CMD_READ;
+  wire       [3:0]    CMD_WRITE;
+  wire       [3:0]    CMD_BURST_TERMINATE;
+  wire       [3:0]    CMD_PRECHARGE;
+  wire       [3:0]    CMD_REFRESH;
+  wire       [3:0]    CMD_LOAD_MODE_REG;
+  wire       [1:0]    DQM_ALL_VALID;
+  wire       [1:0]    DQM_ALL_INVALID;
+  wire       [12:0]   MODE_VALUE;
+  reg        [3:0]    commandReg;
+  reg        [12:0]   addressReg;
+  reg        [1:0]    bankAddrReg;
+  reg        [7:0]    burstLenReg;
+  reg        [8:0]    columnAddrReg;
+  reg        [31:0]   busReadDataReg;
+  reg                 busReadDataVldReg;
+  reg                 busReadDataLastReg;
+  reg        [3:0]    opIdReg;
+  reg        [3:0]    strobeReg;
+  reg        [31:0]   busWriteDataReg;
+  reg        [1:0]    busDataShiftCnt;
+  wire       [1:0]    writeMask;
+  wire       [15:0]   busWrite;
+  reg        [1:0]    mask;
+  reg        [13:0]   stateCounter_counter;
+  wire                stateCounter_busy;
+  wire                refreshCounter_willIncrement;
+  wire                refreshCounter_willClear;
+  reg        [9:0]    refreshCounter_valueNext;
+  reg        [9:0]    refreshCounter_value;
+  wire                refreshCounter_willOverflowIfInc;
+  wire                refreshCounter_willOverflow;
+  wire                initPeriod;
+  reg                 refreshReqReg;
+  reg                 preReqIsWriteReg;
+  wire                readReq;
+  wire                writeReq;
+  reg                 initFsm_wantExit;
+  reg                 initFsm_wantStart;
+  reg                 refreshFsm_wantExit;
+  reg                 refreshFsm_wantStart;
+  reg                 writeFsm_wantExit;
+  reg                 writeFsm_wantStart;
+  reg                 readFsm_wantExit;
+  reg                 readFsm_wantStart;
+  wire                fsm_wantExit;
+  reg                 fsm_wantStart;
+  reg        [15:0]   readArea_readReg;
+  reg                 startBurstReadReg;
+  reg        `readFsm_enumDefinition_binary_sequential_type readFsm_stateReg;
+  reg        `readFsm_enumDefinition_binary_sequential_type readFsm_stateNext;
+  wire                _zz_1;
+  wire                _zz_2;
+  reg        `initFsm_enumDefinition_binary_sequential_type initFsm_stateReg;
+  reg        `initFsm_enumDefinition_binary_sequential_type initFsm_stateNext;
+  reg        `refreshFsm_enumDefinition_binary_sequential_type refreshFsm_stateReg;
+  reg        `refreshFsm_enumDefinition_binary_sequential_type refreshFsm_stateNext;
+  wire                _zz_3;
+  wire                _zz_4;
+  reg        `writeFsm_enumDefinition_binary_sequential_type writeFsm_stateReg;
+  reg        `writeFsm_enumDefinition_binary_sequential_type writeFsm_stateNext;
   wire                _zz_5;
+  wire                _zz_6;
+  reg        `fsm_enumDefinition_binary_sequential_type fsm_stateReg;
+  reg        `fsm_enumDefinition_binary_sequential_type fsm_stateNext;
+  wire                _zz_7;
+  wire                _zz_8;
+  `ifndef SYNTHESIS
+  reg [167:0] readFsm_stateReg_string;
+  reg [167:0] readFsm_stateNext_string;
+  reg [207:0] initFsm_stateReg_string;
+  reg [207:0] initFsm_stateNext_string;
+  reg [223:0] refreshFsm_stateReg_string;
+  reg [223:0] refreshFsm_stateNext_string;
+  reg [167:0] writeFsm_stateReg_string;
+  reg [167:0] writeFsm_stateNext_string;
+  reg [103:0] fsm_stateReg_string;
+  reg [103:0] fsm_stateNext_string;
+  `endif
 
-  assign _zz_6 = (_zz_2 - _zz_8);
-  assign _zz_7 = {maskLocked_0,maskLocked_1};
-  assign _zz_8 = {2'd0, _zz_7};
-  assign _zz_9 = _zz_4[0 : 0];
-  assign _zz_10 = _zz_4[1 : 1];
-  assign maskRouted_0 = (locked ? maskLocked_0 : maskProposal_0);
-  assign maskRouted_1 = (locked ? maskLocked_1 : maskProposal_1);
-  assign _zz_1 = {io_inputs_1_valid,io_inputs_0_valid};
-  assign _zz_2 = {_zz_1,_zz_1};
-  assign _zz_3 = (_zz_2 & (~ _zz_6));
-  assign _zz_4 = (_zz_3[3 : 2] | _zz_3[1 : 0]);
-  assign maskProposal_0 = _zz_9[0];
-  assign maskProposal_1 = _zz_10[0];
-  assign io_output_valid = ((io_inputs_0_valid && maskRouted_0) || (io_inputs_1_valid && maskRouted_1));
-  assign io_output_payload_addr = (maskRouted_0 ? io_inputs_0_payload_addr : io_inputs_1_payload_addr);
-  assign io_output_payload_id = (maskRouted_0 ? io_inputs_0_payload_id : io_inputs_1_payload_id);
-  assign io_output_payload_len = (maskRouted_0 ? io_inputs_0_payload_len : io_inputs_1_payload_len);
-  assign io_output_payload_size = (maskRouted_0 ? io_inputs_0_payload_size : io_inputs_1_payload_size);
-  assign io_output_payload_burst = (maskRouted_0 ? io_inputs_0_payload_burst : io_inputs_1_payload_burst);
-  assign io_inputs_0_ready = (maskRouted_0 && io_output_ready);
-  assign io_inputs_1_ready = (maskRouted_1 && io_output_ready);
-  assign io_chosenOH = {maskRouted_1,maskRouted_0};
-  assign _zz_5 = io_chosenOH[1];
-  assign io_chosen = _zz_5;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
-      locked <= 1'b0;
-      maskLocked_0 <= 1'b0;
-      maskLocked_1 <= 1'b1;
+
+  assign _zz_20 = ((! (writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE)) && (writeFsm_stateNext == `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE));
+  assign _zz_21 = (2'b00 < busDataShiftCnt);
+  assign _zz_22 = ((! (writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE)) && (writeFsm_stateNext == `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE));
+  assign _zz_23 = (_zz_5 && (! _zz_6));
+  assign _zz_24 = ((! (readFsm_stateReg == `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE)) && (readFsm_stateNext == `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE));
+  assign _zz_25 = (! stateCounter_busy);
+  assign _zz_26 = (! stateCounter_busy);
+  assign _zz_27 = (stateCounter_counter == 14'h0003);
+  assign _zz_28 = (! stateCounter_busy);
+  assign _zz_29 = refreshCounter_willIncrement;
+  assign _zz_30 = {9'd0, _zz_29};
+  assign _zz_31 = {1'd0, rFifo_io_availability};
+  assign _zz_32 = {1'd0, wFifo_io_occupancy};
+  assign _zz_33 = ({1'd0,arFifo_io_pop_payload_len} <<< 1);
+  assign _zz_34 = {6'd0, burstLenReg};
+  assign _zz_35 = (burstLenReg - 8'h01);
+  assign _zz_36 = (strobeReg >>> 2);
+  assign _zz_37 = (busWriteDataReg >>> 16);
+  assign _zz_38 = ({1'd0,awFifo_io_pop_payload_len} <<< 1);
+  assign _zz_39 = {6'd0, burstLenReg};
+  assign _zz_40 = (burstLenReg - 8'h01);
+  StreamFifo_1 awFifo (
+    .io_push_valid            (io_axi_aw_valid                   ), //i
+    .io_push_ready            (awFifo_io_push_ready              ), //o
+    .io_push_payload_addr     (io_axi_aw_payload_addr[31:0]      ), //i
+    .io_push_payload_id       (io_axi_aw_payload_id[3:0]         ), //i
+    .io_push_payload_len      (io_axi_aw_payload_len[7:0]        ), //i
+    .io_push_payload_size     (io_axi_aw_payload_size[2:0]       ), //i
+    .io_push_payload_burst    (io_axi_aw_payload_burst[1:0]      ), //i
+    .io_pop_valid             (awFifo_io_pop_valid               ), //o
+    .io_pop_ready             (_zz_9                             ), //i
+    .io_pop_payload_addr      (awFifo_io_pop_payload_addr[31:0]  ), //o
+    .io_pop_payload_id        (awFifo_io_pop_payload_id[3:0]     ), //o
+    .io_pop_payload_len       (awFifo_io_pop_payload_len[7:0]    ), //o
+    .io_pop_payload_size      (awFifo_io_pop_payload_size[2:0]   ), //o
+    .io_pop_payload_burst     (awFifo_io_pop_payload_burst[1:0]  ), //o
+    .io_flush                 (_zz_10                            ), //i
+    .io_occupancy             (awFifo_io_occupancy[6:0]          ), //o
+    .io_availability          (awFifo_io_availability[6:0]       ), //o
+    .clk                      (clk                               ), //i
+    .reset                    (reset                             )  //i
+  );
+  StreamFifo_2 wFifo (
+    .io_push_valid           (io_axi_w_valid                   ), //i
+    .io_push_ready           (wFifo_io_push_ready              ), //o
+    .io_push_payload_data    (io_axi_w_payload_data[31:0]      ), //i
+    .io_push_payload_strb    (io_axi_w_payload_strb[3:0]       ), //i
+    .io_push_payload_last    (io_axi_w_payload_last            ), //i
+    .io_pop_valid            (wFifo_io_pop_valid               ), //o
+    .io_pop_ready            (_zz_11                           ), //i
+    .io_pop_payload_data     (wFifo_io_pop_payload_data[31:0]  ), //o
+    .io_pop_payload_strb     (wFifo_io_pop_payload_strb[3:0]   ), //o
+    .io_pop_payload_last     (wFifo_io_pop_payload_last        ), //o
+    .io_flush                (_zz_12                           ), //i
+    .io_occupancy            (wFifo_io_occupancy[6:0]          ), //o
+    .io_availability         (wFifo_io_availability[6:0]       ), //o
+    .clk                     (clk                              ), //i
+    .reset                   (reset                            )  //i
+  );
+  StreamFifo_3 bFifo (
+    .io_push_valid           (_zz_13                          ), //i
+    .io_push_ready           (bFifo_io_push_ready             ), //o
+    .io_push_payload_id      (opIdReg[3:0]                    ), //i
+    .io_push_payload_resp    (_zz_14[1:0]                     ), //i
+    .io_pop_valid            (bFifo_io_pop_valid              ), //o
+    .io_pop_ready            (io_axi_b_ready                  ), //i
+    .io_pop_payload_id       (bFifo_io_pop_payload_id[3:0]    ), //o
+    .io_pop_payload_resp     (bFifo_io_pop_payload_resp[1:0]  ), //o
+    .io_flush                (_zz_15                          ), //i
+    .io_occupancy            (bFifo_io_occupancy[6:0]         ), //o
+    .io_availability         (bFifo_io_availability[6:0]      ), //o
+    .clk                     (clk                             ), //i
+    .reset                   (reset                           )  //i
+  );
+  StreamFifo_1 arFifo (
+    .io_push_valid            (io_axi_ar_valid                   ), //i
+    .io_push_ready            (arFifo_io_push_ready              ), //o
+    .io_push_payload_addr     (io_axi_ar_payload_addr[31:0]      ), //i
+    .io_push_payload_id       (io_axi_ar_payload_id[3:0]         ), //i
+    .io_push_payload_len      (io_axi_ar_payload_len[7:0]        ), //i
+    .io_push_payload_size     (io_axi_ar_payload_size[2:0]       ), //i
+    .io_push_payload_burst    (io_axi_ar_payload_burst[1:0]      ), //i
+    .io_pop_valid             (arFifo_io_pop_valid               ), //o
+    .io_pop_ready             (_zz_16                            ), //i
+    .io_pop_payload_addr      (arFifo_io_pop_payload_addr[31:0]  ), //o
+    .io_pop_payload_id        (arFifo_io_pop_payload_id[3:0]     ), //o
+    .io_pop_payload_len       (arFifo_io_pop_payload_len[7:0]    ), //o
+    .io_pop_payload_size      (arFifo_io_pop_payload_size[2:0]   ), //o
+    .io_pop_payload_burst     (arFifo_io_pop_payload_burst[1:0]  ), //o
+    .io_flush                 (_zz_17                            ), //i
+    .io_occupancy             (arFifo_io_occupancy[6:0]          ), //o
+    .io_availability          (arFifo_io_availability[6:0]       ), //o
+    .clk                      (clk                               ), //i
+    .reset                    (reset                             )  //i
+  );
+  StreamFifo_5 rFifo (
+    .io_push_valid           (busReadDataVldReg                ), //i
+    .io_push_ready           (rFifo_io_push_ready              ), //o
+    .io_push_payload_data    (busReadDataReg[31:0]             ), //i
+    .io_push_payload_id      (opIdReg[3:0]                     ), //i
+    .io_push_payload_resp    (_zz_18[1:0]                      ), //i
+    .io_push_payload_last    (busReadDataLastReg               ), //i
+    .io_pop_valid            (rFifo_io_pop_valid               ), //o
+    .io_pop_ready            (io_axi_r_ready                   ), //i
+    .io_pop_payload_data     (rFifo_io_pop_payload_data[31:0]  ), //o
+    .io_pop_payload_id       (rFifo_io_pop_payload_id[3:0]     ), //o
+    .io_pop_payload_resp     (rFifo_io_pop_payload_resp[1:0]   ), //o
+    .io_pop_payload_last     (rFifo_io_pop_payload_last        ), //o
+    .io_flush                (_zz_19                           ), //i
+    .io_occupancy            (rFifo_io_occupancy[6:0]          ), //o
+    .io_availability         (rFifo_io_availability[6:0]       ), //o
+    .clk                     (clk                              ), //i
+    .reset                   (reset                            )  //i
+  );
+  `ifndef SYNTHESIS
+  always @(*) begin
+    case(readFsm_stateReg)
+      `readFsm_enumDefinition_binary_sequential_readFsm_BOOT : readFsm_stateReg_string = "readFsm_BOOT         ";
+      `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE : readFsm_stateReg_string = "readFsm_ACTIVE       ";
+      `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD : readFsm_stateReg_string = "readFsm_SEND_READ_CMD";
+      `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ : readFsm_stateReg_string = "readFsm_BURST_READ   ";
+      default : readFsm_stateReg_string = "?????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(readFsm_stateNext)
+      `readFsm_enumDefinition_binary_sequential_readFsm_BOOT : readFsm_stateNext_string = "readFsm_BOOT         ";
+      `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE : readFsm_stateNext_string = "readFsm_ACTIVE       ";
+      `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD : readFsm_stateNext_string = "readFsm_SEND_READ_CMD";
+      `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ : readFsm_stateNext_string = "readFsm_BURST_READ   ";
+      default : readFsm_stateNext_string = "?????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(initFsm_stateReg)
+      `initFsm_enumDefinition_binary_sequential_initFsm_BOOT : initFsm_stateReg_string = "initFsm_BOOT              ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT : initFsm_stateReg_string = "initFsm_INIT_WAIT         ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE : initFsm_stateReg_string = "initFsm_INIT_PRECHARGE    ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1 : initFsm_stateReg_string = "initFsm_INIT_REFRESH_1    ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2 : initFsm_stateReg_string = "initFsm_INIT_REFRESH_2    ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG : initFsm_stateReg_string = "initFsm_INIT_LOAD_MODE_REG";
+      default : initFsm_stateReg_string = "??????????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(initFsm_stateNext)
+      `initFsm_enumDefinition_binary_sequential_initFsm_BOOT : initFsm_stateNext_string = "initFsm_BOOT              ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT : initFsm_stateNext_string = "initFsm_INIT_WAIT         ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE : initFsm_stateNext_string = "initFsm_INIT_PRECHARGE    ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1 : initFsm_stateNext_string = "initFsm_INIT_REFRESH_1    ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2 : initFsm_stateNext_string = "initFsm_INIT_REFRESH_2    ";
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG : initFsm_stateNext_string = "initFsm_INIT_LOAD_MODE_REG";
+      default : initFsm_stateNext_string = "??????????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(refreshFsm_stateReg)
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT : refreshFsm_stateReg_string = "refreshFsm_BOOT             ";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : refreshFsm_stateReg_string = "refreshFsm_REFRESH_PRECHARGE";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : refreshFsm_stateReg_string = "refreshFsm_REFRESH          ";
+      default : refreshFsm_stateReg_string = "????????????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(refreshFsm_stateNext)
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT : refreshFsm_stateNext_string = "refreshFsm_BOOT             ";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : refreshFsm_stateNext_string = "refreshFsm_REFRESH_PRECHARGE";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : refreshFsm_stateNext_string = "refreshFsm_REFRESH          ";
+      default : refreshFsm_stateNext_string = "????????????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(writeFsm_stateReg)
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT : writeFsm_stateReg_string = "writeFsm_BOOT        ";
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : writeFsm_stateReg_string = "writeFsm_ACTIVE_WRITE";
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : writeFsm_stateReg_string = "writeFsm_BURST_WRITE ";
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE : writeFsm_stateReg_string = "writeFsm_TERM_WRITE  ";
+      default : writeFsm_stateReg_string = "?????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(writeFsm_stateNext)
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT : writeFsm_stateNext_string = "writeFsm_BOOT        ";
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : writeFsm_stateNext_string = "writeFsm_ACTIVE_WRITE";
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : writeFsm_stateNext_string = "writeFsm_BURST_WRITE ";
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE : writeFsm_stateNext_string = "writeFsm_TERM_WRITE  ";
+      default : writeFsm_stateNext_string = "?????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(fsm_stateReg)
+      `fsm_enumDefinition_binary_sequential_fsm_BOOT : fsm_stateReg_string = "fsm_BOOT     ";
+      `fsm_enumDefinition_binary_sequential_fsm_INIT : fsm_stateReg_string = "fsm_INIT     ";
+      `fsm_enumDefinition_binary_sequential_fsm_IDLE : fsm_stateReg_string = "fsm_IDLE     ";
+      `fsm_enumDefinition_binary_sequential_fsm_REFRESH : fsm_stateReg_string = "fsm_REFRESH  ";
+      `fsm_enumDefinition_binary_sequential_fsm_WRITE : fsm_stateReg_string = "fsm_WRITE    ";
+      `fsm_enumDefinition_binary_sequential_fsm_READ : fsm_stateReg_string = "fsm_READ     ";
+      `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE : fsm_stateReg_string = "fsm_PRECHARGE";
+      default : fsm_stateReg_string = "?????????????";
+    endcase
+  end
+  always @(*) begin
+    case(fsm_stateNext)
+      `fsm_enumDefinition_binary_sequential_fsm_BOOT : fsm_stateNext_string = "fsm_BOOT     ";
+      `fsm_enumDefinition_binary_sequential_fsm_INIT : fsm_stateNext_string = "fsm_INIT     ";
+      `fsm_enumDefinition_binary_sequential_fsm_IDLE : fsm_stateNext_string = "fsm_IDLE     ";
+      `fsm_enumDefinition_binary_sequential_fsm_REFRESH : fsm_stateNext_string = "fsm_REFRESH  ";
+      `fsm_enumDefinition_binary_sequential_fsm_WRITE : fsm_stateNext_string = "fsm_WRITE    ";
+      `fsm_enumDefinition_binary_sequential_fsm_READ : fsm_stateNext_string = "fsm_READ     ";
+      `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE : fsm_stateNext_string = "fsm_PRECHARGE";
+      default : fsm_stateNext_string = "?????????????";
+    endcase
+  end
+  `endif
+
+  assign CMD_UNSELECTED = 4'b1000;
+  assign CMD_NOP = 4'b0111;
+  assign CMD_ACTIVE = 4'b0011;
+  assign CMD_READ = 4'b0101;
+  assign CMD_WRITE = 4'b0100;
+  assign CMD_BURST_TERMINATE = 4'b0110;
+  assign CMD_PRECHARGE = 4'b0010;
+  assign CMD_REFRESH = 4'b0001;
+  assign CMD_LOAD_MODE_REG = 4'b0000;
+  assign DQM_ALL_VALID = 2'b00;
+  assign DQM_ALL_INVALID = (~ DQM_ALL_VALID);
+  assign MODE_VALUE = {{6'h0,3'b011},4'b0111};
+  assign io_axi_aw_ready = awFifo_io_push_ready;
+  assign io_axi_w_ready = wFifo_io_push_ready;
+  assign io_axi_b_valid = bFifo_io_pop_valid;
+  assign io_axi_b_payload_id = bFifo_io_pop_payload_id;
+  assign io_axi_b_payload_resp = bFifo_io_pop_payload_resp;
+  assign io_axi_ar_ready = arFifo_io_push_ready;
+  assign io_axi_r_valid = rFifo_io_pop_valid;
+  assign io_axi_r_payload_data = rFifo_io_pop_payload_data;
+  assign io_axi_r_payload_id = rFifo_io_pop_payload_id;
+  assign io_axi_r_payload_resp = rFifo_io_pop_payload_resp;
+  assign io_axi_r_payload_last = rFifo_io_pop_payload_last;
+  assign writeMask = strobeReg[1 : 0];
+  assign busWrite = busWriteDataReg[15 : 0];
+  always @ (*) begin
+    _zz_9 = 1'b0;
+    if(_zz_20)begin
+      _zz_9 = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    _zz_11 = 1'b0;
+    case(writeFsm_stateReg)
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : begin
+      end
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : begin
+        if(! _zz_21) begin
+          _zz_11 = 1'b1;
+        end
+      end
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE : begin
+      end
+      default : begin
+      end
+    endcase
+    if(_zz_22)begin
+      _zz_11 = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    _zz_13 = 1'b0;
+    if(_zz_23)begin
+      _zz_13 = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    _zz_16 = 1'b0;
+    if(_zz_24)begin
+      _zz_16 = 1'b1;
+    end
+  end
+
+  assign _zz_14 = 2'b00;
+  assign _zz_18 = 2'b00;
+  assign io_sdram_BA = bankAddrReg;
+  assign io_sdram_ADDR = addressReg;
+  assign io_sdram_DQM = mask;
+  assign io_sdram_CKE = 1'b1;
+  assign io_sdram_CSn = commandReg[3];
+  assign io_sdram_RASn = commandReg[2];
+  assign io_sdram_CASn = commandReg[1];
+  assign io_sdram_WEn = commandReg[0];
+  assign io_sdram_DQ_write = busWrite;
+  always @ (*) begin
+    io_initDone = 1'b0;
+    if((_zz_7 && (! _zz_8)))begin
+      io_initDone = 1'b1;
+    end
+  end
+
+  assign stateCounter_busy = (stateCounter_counter != 14'h0);
+  assign refreshCounter_willClear = 1'b0;
+  assign refreshCounter_willOverflowIfInc = (refreshCounter_value == 10'h30d);
+  assign refreshCounter_willOverflow = (refreshCounter_willOverflowIfInc && refreshCounter_willIncrement);
+  always @ (*) begin
+    if(refreshCounter_willOverflow)begin
+      refreshCounter_valueNext = 10'h0;
     end else begin
-      if(io_output_valid)begin
-        maskLocked_0 <= maskRouted_0;
-        maskLocked_1 <= maskRouted_1;
+      refreshCounter_valueNext = (refreshCounter_value + _zz_30);
+    end
+    if(refreshCounter_willClear)begin
+      refreshCounter_valueNext = 10'h0;
+    end
+  end
+
+  assign refreshCounter_willIncrement = 1'b1;
+  assign readReq = (arFifo_io_pop_valid && (arFifo_io_pop_payload_len <= _zz_31));
+  assign writeReq = ((awFifo_io_pop_valid && (awFifo_io_pop_payload_len <= _zz_32)) && (7'h0 < bFifo_io_availability));
+  always @ (*) begin
+    initFsm_wantExit = 1'b0;
+    case(initFsm_stateReg)
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT : begin
       end
-      if(io_output_valid)begin
-        locked <= 1'b1;
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE : begin
       end
-      if((io_output_valid && io_output_ready))begin
-        locked <= 1'b0;
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1 : begin
+      end
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2 : begin
+      end
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG : begin
+        if(_zz_25)begin
+          initFsm_wantExit = 1'b1;
+        end
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  always @ (*) begin
+    initFsm_wantStart = 1'b0;
+    if(((! _zz_7) && _zz_8))begin
+      initFsm_wantStart = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    refreshFsm_wantExit = 1'b0;
+    case(refreshFsm_stateReg)
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : begin
+      end
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : begin
+        if(_zz_26)begin
+          refreshFsm_wantExit = 1'b1;
+        end
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  always @ (*) begin
+    refreshFsm_wantStart = 1'b0;
+    if(((! (fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_REFRESH)) && (fsm_stateNext == `fsm_enumDefinition_binary_sequential_fsm_REFRESH)))begin
+      refreshFsm_wantStart = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    writeFsm_wantExit = 1'b0;
+    case(writeFsm_stateReg)
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : begin
+      end
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : begin
+      end
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE : begin
+        writeFsm_wantExit = 1'b1;
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  always @ (*) begin
+    writeFsm_wantStart = 1'b0;
+    if(((! (fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_WRITE)) && (fsm_stateNext == `fsm_enumDefinition_binary_sequential_fsm_WRITE)))begin
+      writeFsm_wantStart = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    readFsm_wantExit = 1'b0;
+    case(readFsm_stateReg)
+      `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE : begin
+      end
+      `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD : begin
+      end
+      `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ : begin
+        if(! _zz_27) begin
+          if(_zz_28)begin
+            readFsm_wantExit = 1'b1;
+          end
+        end
+      end
+      default : begin
+      end
+    endcase
+  end
+
+  always @ (*) begin
+    readFsm_wantStart = 1'b0;
+    if(((! (fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_READ)) && (fsm_stateNext == `fsm_enumDefinition_binary_sequential_fsm_READ)))begin
+      readFsm_wantStart = 1'b1;
+    end
+  end
+
+  assign fsm_wantExit = 1'b0;
+  always @ (*) begin
+    fsm_wantStart = 1'b0;
+    case(fsm_stateReg)
+      `fsm_enumDefinition_binary_sequential_fsm_INIT : begin
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_IDLE : begin
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_REFRESH : begin
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_WRITE : begin
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_READ : begin
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE : begin
+      end
+      default : begin
+        fsm_wantStart = 1'b1;
+      end
+    endcase
+  end
+
+  assign initPeriod = (fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_INIT);
+  always @ (*) begin
+    if((writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE))begin
+      mask = (DQM_ALL_VALID | (~ writeMask));
+    end else begin
+      if((fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_READ))begin
+        mask = DQM_ALL_VALID;
+      end else begin
+        mask = DQM_ALL_INVALID;
       end
     end
+  end
+
+  always @ (*) begin
+    if((writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE))begin
+      io_sdram_DQ_writeEnable = 16'hffff;
+    end else begin
+      io_sdram_DQ_writeEnable = 16'h0;
+    end
+  end
+
+  assign _zz_1 = (readFsm_stateReg == `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ);
+  assign _zz_2 = (readFsm_stateNext == `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ);
+  always @ (*) begin
+    readFsm_stateNext = readFsm_stateReg;
+    case(readFsm_stateReg)
+      `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE : begin
+        if((! stateCounter_busy))begin
+          readFsm_stateNext = `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD;
+        end
+      end
+      `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD : begin
+        if((! stateCounter_busy))begin
+          readFsm_stateNext = `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ;
+        end
+      end
+      `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ : begin
+        if(! _zz_27) begin
+          if(_zz_28)begin
+            readFsm_stateNext = `readFsm_enumDefinition_binary_sequential_readFsm_BOOT;
+          end
+        end
+      end
+      default : begin
+      end
+    endcase
+    if(readFsm_wantStart)begin
+      readFsm_stateNext = `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE;
+    end
+  end
+
+  always @ (*) begin
+    initFsm_stateNext = initFsm_stateReg;
+    case(initFsm_stateReg)
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT : begin
+        if((! stateCounter_busy))begin
+          initFsm_stateNext = `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE;
+        end
+      end
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE : begin
+        if((! stateCounter_busy))begin
+          initFsm_stateNext = `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1;
+        end
+      end
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1 : begin
+        if((! stateCounter_busy))begin
+          initFsm_stateNext = `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2;
+        end
+      end
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2 : begin
+        if((! stateCounter_busy))begin
+          initFsm_stateNext = `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG;
+        end
+      end
+      `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG : begin
+        if(_zz_25)begin
+          initFsm_stateNext = `initFsm_enumDefinition_binary_sequential_initFsm_BOOT;
+        end
+      end
+      default : begin
+      end
+    endcase
+    if(initFsm_wantStart)begin
+      initFsm_stateNext = `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT;
+    end
+  end
+
+  assign _zz_3 = (refreshFsm_stateReg == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH);
+  assign _zz_4 = (refreshFsm_stateNext == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH);
+  always @ (*) begin
+    refreshFsm_stateNext = refreshFsm_stateReg;
+    case(refreshFsm_stateReg)
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : begin
+        if((! stateCounter_busy))begin
+          refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH;
+        end
+      end
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : begin
+        if(_zz_26)begin
+          refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT;
+        end
+      end
+      default : begin
+      end
+    endcase
+    if(refreshFsm_wantStart)begin
+      refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE;
+    end
+  end
+
+  assign _zz_5 = (writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE);
+  assign _zz_6 = (writeFsm_stateNext == `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE);
+  always @ (*) begin
+    writeFsm_stateNext = writeFsm_stateReg;
+    case(writeFsm_stateReg)
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : begin
+        if((! stateCounter_busy))begin
+          writeFsm_stateNext = `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE;
+        end
+      end
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : begin
+        if((! stateCounter_busy))begin
+          writeFsm_stateNext = `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE;
+        end
+      end
+      `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE : begin
+        writeFsm_stateNext = `writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT;
+      end
+      default : begin
+      end
+    endcase
+    if(writeFsm_wantStart)begin
+      writeFsm_stateNext = `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE;
+    end
+  end
+
+  assign _zz_7 = (fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_INIT);
+  assign _zz_8 = (fsm_stateNext == `fsm_enumDefinition_binary_sequential_fsm_INIT);
+  always @ (*) begin
+    fsm_stateNext = fsm_stateReg;
+    case(fsm_stateReg)
+      `fsm_enumDefinition_binary_sequential_fsm_INIT : begin
+        if(initFsm_wantExit)begin
+          fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_IDLE;
+        end
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_IDLE : begin
+        if(refreshReqReg)begin
+          fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_REFRESH;
+        end else begin
+          if((readReq && writeReq))begin
+            if(preReqIsWriteReg)begin
+              fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_READ;
+            end else begin
+              fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_WRITE;
+            end
+          end else begin
+            if((writeReq && (! readReq)))begin
+              fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_WRITE;
+            end else begin
+              if((readReq && (! writeReq)))begin
+                fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_READ;
+              end
+            end
+          end
+        end
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_REFRESH : begin
+        if(refreshFsm_wantExit)begin
+          fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_IDLE;
+        end
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_WRITE : begin
+        if(writeFsm_wantExit)begin
+          fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE;
+        end
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_READ : begin
+        if(readFsm_wantExit)begin
+          fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE;
+        end
+      end
+      `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE : begin
+        fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_IDLE;
+      end
+      default : begin
+      end
+    endcase
+    if(fsm_wantStart)begin
+      fsm_stateNext = `fsm_enumDefinition_binary_sequential_fsm_INIT;
+    end
+  end
+
+  assign _zz_10 = 1'b0;
+  assign _zz_12 = 1'b0;
+  assign _zz_15 = 1'b0;
+  assign _zz_17 = 1'b0;
+  assign _zz_19 = 1'b0;
+  always @ (posedge clk or posedge reset) begin
+    if (reset) begin
+      commandReg <= 4'b0000;
+      addressReg <= 13'h0;
+      bankAddrReg <= 2'b00;
+      burstLenReg <= 8'h0;
+      columnAddrReg <= 9'h0;
+      busReadDataReg <= 32'h0;
+      busReadDataVldReg <= 1'b0;
+      busReadDataLastReg <= 1'b0;
+      opIdReg <= 4'b0000;
+      strobeReg <= 4'b0000;
+      busWriteDataReg <= 32'h0;
+      busDataShiftCnt <= 2'b00;
+      stateCounter_counter <= 14'h0;
+      refreshCounter_value <= 10'h0;
+      refreshReqReg <= 1'b0;
+      preReqIsWriteReg <= 1'b0;
+      readFsm_stateReg <= `readFsm_enumDefinition_binary_sequential_readFsm_BOOT;
+      initFsm_stateReg <= `initFsm_enumDefinition_binary_sequential_initFsm_BOOT;
+      refreshFsm_stateReg <= `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT;
+      writeFsm_stateReg <= `writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT;
+      fsm_stateReg <= `fsm_enumDefinition_binary_sequential_fsm_BOOT;
+    end else begin
+      commandReg <= CMD_NOP;
+      busReadDataLastReg <= 1'b0;
+      `ifndef SYNTHESIS
+        `ifdef FORMAL
+          assert((columnAddrReg < 9'h1f0));
+        `else
+          if(!(columnAddrReg < 9'h1f0)) begin
+            $display("ERROR invalid column address and burst length");
+          end
+        `endif
+      `endif
+      `ifndef SYNTHESIS
+        `ifdef FORMAL
+          assert(((awFifo_io_pop_payload_burst == 2'b01) && (arFifo_io_pop_payload_burst == 2'b01)));
+        `else
+          if(!((awFifo_io_pop_payload_burst == 2'b01) && (arFifo_io_pop_payload_burst == 2'b01))) begin
+            $display("ERROR only burst type INCR allowed");
+          end
+        `endif
+      `endif
+      `ifndef SYNTHESIS
+        `ifdef FORMAL
+          assert((awFifo_io_pop_payload_len < 8'h40));
+        `else
+          if(!(awFifo_io_pop_payload_len < 8'h40)) begin
+            $display("ERROR burst length should be less than 256/2");
+          end
+        `endif
+      `endif
+      if(stateCounter_busy)begin
+        stateCounter_counter <= (stateCounter_counter - 14'h0001);
+      end
+      refreshCounter_value <= refreshCounter_valueNext;
+      if(startBurstReadReg)begin
+        busDataShiftCnt <= 2'b01;
+      end
+      busReadDataVldReg <= 1'b0;
+      if((readFsm_stateReg == `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ))begin
+        busReadDataReg <= {readArea_readReg,busReadDataReg[31 : 16]};
+        if((2'b00 < busDataShiftCnt))begin
+          busDataShiftCnt <= (busDataShiftCnt - 2'b01);
+        end else begin
+          busReadDataVldReg <= 1'b1;
+          busDataShiftCnt <= 2'b01;
+        end
+      end
+      if(((! initPeriod) && refreshCounter_willOverflow))begin
+        refreshReqReg <= 1'b1;
+      end
+      readFsm_stateReg <= readFsm_stateNext;
+      case(readFsm_stateReg)
+        `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE : begin
+        end
+        `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD : begin
+        end
+        `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ : begin
+          if(_zz_27)begin
+            commandReg <= CMD_BURST_TERMINATE;
+          end
+        end
+        default : begin
+        end
+      endcase
+      if((_zz_1 && (! _zz_2)))begin
+        preReqIsWriteReg <= 1'b0;
+        busReadDataLastReg <= 1'b1;
+      end
+      if(_zz_24)begin
+        commandReg <= CMD_ACTIVE;
+        bankAddrReg <= arFifo_io_pop_payload_addr[22 : 21];
+        addressReg <= arFifo_io_pop_payload_addr[21 : 9];
+        columnAddrReg <= arFifo_io_pop_payload_addr[8 : 0];
+        opIdReg <= arFifo_io_pop_payload_id;
+        burstLenReg <= _zz_33[7:0];
+        stateCounter_counter <= 14'h0001;
+      end
+      if(((! (readFsm_stateReg == `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD)) && (readFsm_stateNext == `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD)))begin
+        addressReg <= {4'd0, columnAddrReg};
+        commandReg <= CMD_READ;
+        stateCounter_counter <= 14'h0002;
+      end
+      if(((! _zz_1) && _zz_2))begin
+        `ifndef SYNTHESIS
+          `ifdef FORMAL
+            assert(((_zz_34 <= 14'h2710) && (8'h0 < burstLenReg)));
+          `else
+            if(!((_zz_34 <= 14'h2710) && (8'h0 < burstLenReg))) begin
+              $display("FAILURE invalid counter cycle: (toplevel/[SdramController]/burstLenReg :  UInt[8 bits])");
+              $finish;
+            end
+          `endif
+        `endif
+        stateCounter_counter <= {6'd0, _zz_35};
+      end
+      initFsm_stateReg <= initFsm_stateNext;
+      if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT)))begin
+        stateCounter_counter <= 14'h270f;
+      end
+      if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE)))begin
+        addressReg <= 13'h0400;
+        commandReg <= CMD_PRECHARGE;
+        stateCounter_counter <= 14'h0001;
+      end
+      if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1)))begin
+        commandReg <= CMD_REFRESH;
+        stateCounter_counter <= 14'h0006;
+      end
+      if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2)))begin
+        commandReg <= CMD_REFRESH;
+        stateCounter_counter <= 14'h0006;
+      end
+      if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG)))begin
+        addressReg <= MODE_VALUE;
+        commandReg <= CMD_LOAD_MODE_REG;
+        stateCounter_counter <= 14'h0001;
+      end
+      refreshFsm_stateReg <= refreshFsm_stateNext;
+      if((_zz_3 && (! _zz_4)))begin
+        refreshReqReg <= 1'b0;
+      end
+      if(((! (refreshFsm_stateReg == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE)) && (refreshFsm_stateNext == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE)))begin
+        addressReg <= 13'h0400;
+        commandReg <= CMD_REFRESH;
+        stateCounter_counter <= 14'h0001;
+      end
+      if(((! _zz_3) && _zz_4))begin
+        commandReg <= CMD_PRECHARGE;
+        stateCounter_counter <= 14'h0006;
+      end
+      writeFsm_stateReg <= writeFsm_stateNext;
+      case(writeFsm_stateReg)
+        `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : begin
+        end
+        `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : begin
+          strobeReg <= {2'd0, _zz_36};
+          busWriteDataReg <= {16'd0, _zz_37};
+          if(_zz_21)begin
+            busDataShiftCnt <= (busDataShiftCnt - 2'b01);
+          end else begin
+            strobeReg <= wFifo_io_pop_payload_strb;
+            busWriteDataReg <= wFifo_io_pop_payload_data;
+            busDataShiftCnt <= 2'b01;
+          end
+        end
+        `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE : begin
+        end
+        default : begin
+        end
+      endcase
+      if(_zz_23)begin
+        preReqIsWriteReg <= 1'b1;
+      end
+      if(_zz_20)begin
+        commandReg <= CMD_ACTIVE;
+        bankAddrReg <= awFifo_io_pop_payload_addr[22 : 21];
+        addressReg <= awFifo_io_pop_payload_addr[21 : 9];
+        columnAddrReg <= awFifo_io_pop_payload_addr[8 : 0];
+        opIdReg <= awFifo_io_pop_payload_id;
+        burstLenReg <= _zz_38[7:0];
+        stateCounter_counter <= 14'h0001;
+      end
+      if(_zz_22)begin
+        addressReg <= {4'd0, columnAddrReg};
+        commandReg <= CMD_WRITE;
+        `ifndef SYNTHESIS
+          `ifdef FORMAL
+            assert(((_zz_39 <= 14'h2710) && (8'h0 < burstLenReg)));
+          `else
+            if(!((_zz_39 <= 14'h2710) && (8'h0 < burstLenReg))) begin
+              $display("FAILURE invalid counter cycle: (toplevel/[SdramController]/burstLenReg :  UInt[8 bits])");
+              $finish;
+            end
+          `endif
+        `endif
+        stateCounter_counter <= {6'd0, _zz_40};
+        strobeReg <= wFifo_io_pop_payload_strb;
+        busWriteDataReg <= wFifo_io_pop_payload_data;
+        busDataShiftCnt <= 2'b01;
+      end
+      if(((! _zz_5) && _zz_6))begin
+        commandReg <= CMD_BURST_TERMINATE;
+      end
+      fsm_stateReg <= fsm_stateNext;
+      if(((! (fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE)) && (fsm_stateNext == `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE)))begin
+        commandReg <= CMD_PRECHARGE;
+      end
+    end
+  end
+
+  always @ (negedge clk) begin
+    if((io_sdram_DQ_writeEnable == 16'h0))begin
+      readArea_readReg <= io_sdram_DQ_read;
+    end
+  end
+
+  always @ (posedge clk) begin
+    startBurstReadReg <= ((readFsm_stateNext == `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ) && (readFsm_stateReg != `readFsm_enumDefinition_binary_sequential_readFsm_BURST_READ));
   end
 
 
@@ -556,400 +1540,640 @@ module Dma (
 
 endmodule
 
-module Axi4SharedWishboneOnChipRam (
-  input               io_axi_arw_valid,
-  output reg          io_axi_arw_ready,
-  input      [31:0]   io_axi_arw_payload_addr,
-  input      [3:0]    io_axi_arw_payload_id,
-  input      [7:0]    io_axi_arw_payload_len,
-  input      [2:0]    io_axi_arw_payload_size,
-  input      [1:0]    io_axi_arw_payload_burst,
-  input               io_axi_arw_payload_write,
-  input               io_axi_w_valid,
-  output              io_axi_w_ready,
-  input      [31:0]   io_axi_w_payload_data,
-  input      [3:0]    io_axi_w_payload_strb,
-  input               io_axi_w_payload_last,
-  output              io_axi_b_valid,
-  input               io_axi_b_ready,
-  output     [3:0]    io_axi_b_payload_id,
-  output     [1:0]    io_axi_b_payload_resp,
-  output              io_axi_r_valid,
-  input               io_axi_r_ready,
-  output     [31:0]   io_axi_r_payload_data,
-  output     [3:0]    io_axi_r_payload_id,
-  output     [1:0]    io_axi_r_payload_resp,
-  output              io_axi_r_payload_last,
-  input               io_wb_CYC,
-  input               io_wb_STB,
-  output              io_wb_ACK,
-  input               io_wb_WE,
-  input      [31:0]   io_wb_ADR,
-  output     [31:0]   io_wb_DAT_MISO,
-  input      [31:0]   io_wb_DAT_MOSI,
-  input      [3:0]    io_wb_SEL,
+module StreamFifo_5 (
+  input               io_push_valid,
+  output              io_push_ready,
+  input      [31:0]   io_push_payload_data,
+  input      [3:0]    io_push_payload_id,
+  input      [1:0]    io_push_payload_resp,
+  input               io_push_payload_last,
+  output              io_pop_valid,
+  input               io_pop_ready,
+  output     [31:0]   io_pop_payload_data,
+  output     [3:0]    io_pop_payload_id,
+  output     [1:0]    io_pop_payload_resp,
+  output              io_pop_payload_last,
+  input               io_flush,
+  output     [6:0]    io_occupancy,
+  output     [6:0]    io_availability,
   input               clk,
   input               reset
 );
-  reg        [31:0]   _zz_8;
-  reg        [31:0]   _zz_9;
-  reg        [11:0]   _zz_10;
+  reg        [38:0]   _zz_4;
+  wire       [0:0]    _zz_5;
+  wire       [5:0]    _zz_6;
+  wire       [0:0]    _zz_7;
+  wire       [5:0]    _zz_8;
+  wire       [0:0]    _zz_9;
+  wire       [5:0]    _zz_10;
   wire                _zz_11;
-  wire       [5:0]    _zz_12;
-  wire       [1:0]    _zz_13;
-  wire       [11:0]   _zz_14;
-  wire       [11:0]   _zz_15;
-  wire       [11:0]   _zz_16;
-  wire       [2:0]    _zz_17;
-  wire       [2:0]    _zz_18;
-  wire       [5:0]    _zz_19;
-  reg                 wbArea_memRdyReg;
-  wire                wbArea_wbVld;
-  wire       [31:0]   _zz_1;
-  wire       [31:0]   _zz_2;
-  reg                 unburstify_result_valid;
-  wire                unburstify_result_ready;
-  reg                 unburstify_result_payload_last;
-  reg        [31:0]   unburstify_result_payload_fragment_addr;
-  reg        [3:0]    unburstify_result_payload_fragment_id;
-  reg        [2:0]    unburstify_result_payload_fragment_size;
-  reg        [1:0]    unburstify_result_payload_fragment_burst;
-  reg                 unburstify_result_payload_fragment_write;
-  wire                unburstify_doResult;
-  reg                 unburstify_buffer_valid;
-  reg        [7:0]    unburstify_buffer_len;
-  reg        [7:0]    unburstify_buffer_beat;
-  reg        [31:0]   unburstify_buffer_transaction_addr;
-  reg        [3:0]    unburstify_buffer_transaction_id;
-  reg        [2:0]    unburstify_buffer_transaction_size;
-  reg        [1:0]    unburstify_buffer_transaction_burst;
-  reg                 unburstify_buffer_transaction_write;
-  wire                unburstify_buffer_last;
-  wire       [1:0]    Axi4Incr_validSize;
-  reg        [31:0]   Axi4Incr_result;
-  wire       [19:0]   Axi4Incr_highCat;
-  wire       [2:0]    Axi4Incr_sizeValue;
-  wire       [11:0]   Axi4Incr_alignMask;
-  wire       [11:0]   Axi4Incr_base;
-  wire       [11:0]   Axi4Incr_baseIncr;
-  reg        [1:0]    _zz_3;
-  wire       [2:0]    Axi4Incr_wrapCase;
-  wire                _zz_4;
-  wire                axiArea_stage0_valid;
-  wire                axiArea_stage0_ready;
-  wire                axiArea_stage0_payload_last;
-  wire       [31:0]   axiArea_stage0_payload_fragment_addr;
-  wire       [3:0]    axiArea_stage0_payload_fragment_id;
-  wire       [2:0]    axiArea_stage0_payload_fragment_size;
-  wire       [1:0]    axiArea_stage0_payload_fragment_burst;
-  wire                axiArea_stage0_payload_fragment_write;
-  wire       [29:0]   _zz_5;
-  wire                _zz_6;
-  wire       [31:0]   _zz_7;
-  wire                axiArea_stage1_valid;
-  wire                axiArea_stage1_ready;
-  wire                axiArea_stage1_payload_last;
-  wire       [31:0]   axiArea_stage1_payload_fragment_addr;
-  wire       [3:0]    axiArea_stage1_payload_fragment_id;
-  wire       [2:0]    axiArea_stage1_payload_fragment_size;
-  wire       [1:0]    axiArea_stage1_payload_fragment_burst;
-  wire                axiArea_stage1_payload_fragment_write;
-  reg                 axiArea_stage0_m2sPipe_rValid;
-  reg                 axiArea_stage0_m2sPipe_rData_last;
-  reg        [31:0]   axiArea_stage0_m2sPipe_rData_fragment_addr;
-  reg        [3:0]    axiArea_stage0_m2sPipe_rData_fragment_id;
-  reg        [2:0]    axiArea_stage0_m2sPipe_rData_fragment_size;
-  reg        [1:0]    axiArea_stage0_m2sPipe_rData_fragment_burst;
-  reg                 axiArea_stage0_m2sPipe_rData_fragment_write;
-  reg [7:0] ram_symbol0 [0:63];
-  reg [7:0] ram_symbol1 [0:63];
-  reg [7:0] ram_symbol2 [0:63];
-  reg [7:0] ram_symbol3 [0:63];
-  reg [7:0] _zz_20;
-  reg [7:0] _zz_21;
-  reg [7:0] _zz_22;
-  reg [7:0] _zz_23;
-  reg [7:0] _zz_24;
-  reg [7:0] _zz_25;
-  reg [7:0] _zz_26;
-  reg [7:0] _zz_27;
+  wire       [38:0]   _zz_12;
+  reg                 _zz_1;
+  reg                 logic_pushPtr_willIncrement;
+  reg                 logic_pushPtr_willClear;
+  reg        [5:0]    logic_pushPtr_valueNext;
+  reg        [5:0]    logic_pushPtr_value;
+  wire                logic_pushPtr_willOverflowIfInc;
+  wire                logic_pushPtr_willOverflow;
+  reg                 logic_popPtr_willIncrement;
+  reg                 logic_popPtr_willClear;
+  reg        [5:0]    logic_popPtr_valueNext;
+  reg        [5:0]    logic_popPtr_value;
+  wire                logic_popPtr_willOverflowIfInc;
+  wire                logic_popPtr_willOverflow;
+  wire                logic_ptrMatch;
+  reg                 logic_risingOccupancy;
+  wire                logic_pushing;
+  wire                logic_popping;
+  wire                logic_empty;
+  wire                logic_full;
+  reg                 _zz_2;
+  wire       [38:0]   _zz_3;
+  wire       [5:0]    logic_ptrDif;
+  reg [38:0] logic_ram [0:63];
 
-  assign _zz_11 = (io_axi_arw_payload_len == 8'h0);
-  assign _zz_12 = _zz_1[5:0];
-  assign _zz_13 = {(2'b01 < Axi4Incr_validSize),(2'b00 < Axi4Incr_validSize)};
-  assign _zz_14 = unburstify_buffer_transaction_addr[11 : 0];
-  assign _zz_15 = _zz_14;
-  assign _zz_16 = {9'd0, Axi4Incr_sizeValue};
-  assign _zz_17 = {1'd0, Axi4Incr_validSize};
-  assign _zz_18 = {1'd0, _zz_3};
-  assign _zz_19 = _zz_5[5:0];
-  always @ (*) begin
-    _zz_8 = {_zz_23, _zz_22, _zz_21, _zz_20};
-  end
-  always @ (*) begin
-    _zz_9 = {_zz_27, _zz_26, _zz_25, _zz_24};
-  end
+  assign _zz_5 = logic_pushPtr_willIncrement;
+  assign _zz_6 = {5'd0, _zz_5};
+  assign _zz_7 = logic_popPtr_willIncrement;
+  assign _zz_8 = {5'd0, _zz_7};
+  assign _zz_9 = _zz_3[38 : 38];
+  assign _zz_10 = (logic_popPtr_value - logic_pushPtr_value);
+  assign _zz_11 = 1'b1;
+  assign _zz_12 = {io_push_payload_last,{io_push_payload_resp,{io_push_payload_id,io_push_payload_data}}};
   always @ (posedge clk) begin
-    if(wbArea_wbVld) begin
-      _zz_20 <= ram_symbol0[_zz_12];
-      _zz_21 <= ram_symbol1[_zz_12];
-      _zz_22 <= ram_symbol2[_zz_12];
-      _zz_23 <= ram_symbol3[_zz_12];
+    if(_zz_11) begin
+      _zz_4 <= logic_ram[logic_popPtr_valueNext];
     end
   end
 
   always @ (posedge clk) begin
-    if(io_wb_SEL[0] && wbArea_wbVld && io_wb_WE ) begin
-      ram_symbol0[_zz_12] <= _zz_2[7 : 0];
-    end
-    if(io_wb_SEL[1] && wbArea_wbVld && io_wb_WE ) begin
-      ram_symbol1[_zz_12] <= _zz_2[15 : 8];
-    end
-    if(io_wb_SEL[2] && wbArea_wbVld && io_wb_WE ) begin
-      ram_symbol2[_zz_12] <= _zz_2[23 : 16];
-    end
-    if(io_wb_SEL[3] && wbArea_wbVld && io_wb_WE ) begin
-      ram_symbol3[_zz_12] <= _zz_2[31 : 24];
-    end
-  end
-
-  always @ (posedge clk) begin
-    if(_zz_6) begin
-      _zz_24 <= ram_symbol0[_zz_19];
-      _zz_25 <= ram_symbol1[_zz_19];
-      _zz_26 <= ram_symbol2[_zz_19];
-      _zz_27 <= ram_symbol3[_zz_19];
-    end
-  end
-
-  always @ (posedge clk) begin
-    if(io_axi_w_payload_strb[0] && _zz_6 && axiArea_stage0_payload_fragment_write ) begin
-      ram_symbol0[_zz_19] <= _zz_7[7 : 0];
-    end
-    if(io_axi_w_payload_strb[1] && _zz_6 && axiArea_stage0_payload_fragment_write ) begin
-      ram_symbol1[_zz_19] <= _zz_7[15 : 8];
-    end
-    if(io_axi_w_payload_strb[2] && _zz_6 && axiArea_stage0_payload_fragment_write ) begin
-      ram_symbol2[_zz_19] <= _zz_7[23 : 16];
-    end
-    if(io_axi_w_payload_strb[3] && _zz_6 && axiArea_stage0_payload_fragment_write ) begin
-      ram_symbol3[_zz_19] <= _zz_7[31 : 24];
-    end
-  end
-
-  always @(*) begin
-    case(Axi4Incr_wrapCase)
-      3'b000 : begin
-        _zz_10 = {Axi4Incr_base[11 : 1],Axi4Incr_baseIncr[0 : 0]};
-      end
-      3'b001 : begin
-        _zz_10 = {Axi4Incr_base[11 : 2],Axi4Incr_baseIncr[1 : 0]};
-      end
-      3'b010 : begin
-        _zz_10 = {Axi4Incr_base[11 : 3],Axi4Incr_baseIncr[2 : 0]};
-      end
-      3'b011 : begin
-        _zz_10 = {Axi4Incr_base[11 : 4],Axi4Incr_baseIncr[3 : 0]};
-      end
-      3'b100 : begin
-        _zz_10 = {Axi4Incr_base[11 : 5],Axi4Incr_baseIncr[4 : 0]};
-      end
-      default : begin
-        _zz_10 = {Axi4Incr_base[11 : 6],Axi4Incr_baseIncr[5 : 0]};
-      end
-    endcase
-  end
-
-  assign wbArea_wbVld = (io_wb_CYC && io_wb_STB);
-  assign io_wb_ACK = wbArea_memRdyReg;
-  assign _zz_1 = io_wb_ADR;
-  assign _zz_2 = io_wb_DAT_MOSI;
-  assign io_wb_DAT_MISO = _zz_8;
-  assign unburstify_buffer_last = (unburstify_buffer_beat == 8'h01);
-  assign Axi4Incr_validSize = unburstify_buffer_transaction_size[1 : 0];
-  assign Axi4Incr_highCat = unburstify_buffer_transaction_addr[31 : 12];
-  assign Axi4Incr_sizeValue = {(2'b10 == Axi4Incr_validSize),{(2'b01 == Axi4Incr_validSize),(2'b00 == Axi4Incr_validSize)}};
-  assign Axi4Incr_alignMask = {10'd0, _zz_13};
-  assign Axi4Incr_base = (_zz_15 & (~ Axi4Incr_alignMask));
-  assign Axi4Incr_baseIncr = (Axi4Incr_base + _zz_16);
-  always @ (*) begin
-    if((((unburstify_buffer_len & 8'h08) == 8'h08))) begin
-        _zz_3 = 2'b11;
-    end else if((((unburstify_buffer_len & 8'h04) == 8'h04))) begin
-        _zz_3 = 2'b10;
-    end else if((((unburstify_buffer_len & 8'h02) == 8'h02))) begin
-        _zz_3 = 2'b01;
-    end else begin
-        _zz_3 = 2'b00;
-    end
-  end
-
-  assign Axi4Incr_wrapCase = (_zz_17 + _zz_18);
-  always @ (*) begin
-    case(unburstify_buffer_transaction_burst)
-      2'b00 : begin
-        Axi4Incr_result = unburstify_buffer_transaction_addr;
-      end
-      2'b10 : begin
-        Axi4Incr_result = {Axi4Incr_highCat,_zz_10};
-      end
-      default : begin
-        Axi4Incr_result = {Axi4Incr_highCat,Axi4Incr_baseIncr};
-      end
-    endcase
-  end
-
-  always @ (*) begin
-    io_axi_arw_ready = 1'b0;
-    if(! unburstify_buffer_valid) begin
-      io_axi_arw_ready = unburstify_result_ready;
+    if(_zz_1) begin
+      logic_ram[logic_pushPtr_value] <= _zz_12;
     end
   end
 
   always @ (*) begin
-    if(unburstify_buffer_valid)begin
-      unburstify_result_valid = 1'b1;
-    end else begin
-      unburstify_result_valid = io_axi_arw_valid;
+    _zz_1 = 1'b0;
+    if(logic_pushing)begin
+      _zz_1 = 1'b1;
     end
   end
 
   always @ (*) begin
-    if(unburstify_buffer_valid)begin
-      unburstify_result_payload_last = unburstify_buffer_last;
-    end else begin
-      if(_zz_11)begin
-        unburstify_result_payload_last = 1'b1;
-      end else begin
-        unburstify_result_payload_last = 1'b0;
-      end
+    logic_pushPtr_willIncrement = 1'b0;
+    if(logic_pushing)begin
+      logic_pushPtr_willIncrement = 1'b1;
     end
   end
 
   always @ (*) begin
-    if(unburstify_buffer_valid)begin
-      unburstify_result_payload_fragment_id = unburstify_buffer_transaction_id;
-    end else begin
-      unburstify_result_payload_fragment_id = io_axi_arw_payload_id;
+    logic_pushPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_pushPtr_willClear = 1'b1;
+    end
+  end
+
+  assign logic_pushPtr_willOverflowIfInc = (logic_pushPtr_value == 6'h3f);
+  assign logic_pushPtr_willOverflow = (logic_pushPtr_willOverflowIfInc && logic_pushPtr_willIncrement);
+  always @ (*) begin
+    logic_pushPtr_valueNext = (logic_pushPtr_value + _zz_6);
+    if(logic_pushPtr_willClear)begin
+      logic_pushPtr_valueNext = 6'h0;
     end
   end
 
   always @ (*) begin
-    if(unburstify_buffer_valid)begin
-      unburstify_result_payload_fragment_size = unburstify_buffer_transaction_size;
-    end else begin
-      unburstify_result_payload_fragment_size = io_axi_arw_payload_size;
+    logic_popPtr_willIncrement = 1'b0;
+    if(logic_popping)begin
+      logic_popPtr_willIncrement = 1'b1;
     end
   end
 
   always @ (*) begin
-    if(unburstify_buffer_valid)begin
-      unburstify_result_payload_fragment_burst = unburstify_buffer_transaction_burst;
-    end else begin
-      unburstify_result_payload_fragment_burst = io_axi_arw_payload_burst;
+    logic_popPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_popPtr_willClear = 1'b1;
     end
   end
 
+  assign logic_popPtr_willOverflowIfInc = (logic_popPtr_value == 6'h3f);
+  assign logic_popPtr_willOverflow = (logic_popPtr_willOverflowIfInc && logic_popPtr_willIncrement);
   always @ (*) begin
-    if(unburstify_buffer_valid)begin
-      unburstify_result_payload_fragment_write = unburstify_buffer_transaction_write;
-    end else begin
-      unburstify_result_payload_fragment_write = io_axi_arw_payload_write;
+    logic_popPtr_valueNext = (logic_popPtr_value + _zz_8);
+    if(logic_popPtr_willClear)begin
+      logic_popPtr_valueNext = 6'h0;
     end
   end
 
-  always @ (*) begin
-    if(unburstify_buffer_valid)begin
-      unburstify_result_payload_fragment_addr = Axi4Incr_result;
-    end else begin
-      unburstify_result_payload_fragment_addr = io_axi_arw_payload_addr;
-    end
-  end
-
-  assign _zz_4 = (! (unburstify_result_payload_fragment_write && (! io_axi_w_valid)));
-  assign axiArea_stage0_valid = (unburstify_result_valid && _zz_4);
-  assign unburstify_result_ready = (axiArea_stage0_ready && _zz_4);
-  assign axiArea_stage0_payload_last = unburstify_result_payload_last;
-  assign axiArea_stage0_payload_fragment_addr = unburstify_result_payload_fragment_addr;
-  assign axiArea_stage0_payload_fragment_id = unburstify_result_payload_fragment_id;
-  assign axiArea_stage0_payload_fragment_size = unburstify_result_payload_fragment_size;
-  assign axiArea_stage0_payload_fragment_burst = unburstify_result_payload_fragment_burst;
-  assign axiArea_stage0_payload_fragment_write = unburstify_result_payload_fragment_write;
-  assign _zz_5 = axiArea_stage0_payload_fragment_addr[31 : 2];
-  assign _zz_6 = (axiArea_stage0_valid && axiArea_stage0_ready);
-  assign _zz_7 = io_axi_w_payload_data;
-  assign io_axi_r_payload_data = _zz_9;
-  assign io_axi_w_ready = ((unburstify_result_valid && unburstify_result_payload_fragment_write) && axiArea_stage0_ready);
-  assign axiArea_stage0_ready = ((1'b1 && (! axiArea_stage1_valid)) || axiArea_stage1_ready);
-  assign axiArea_stage1_valid = axiArea_stage0_m2sPipe_rValid;
-  assign axiArea_stage1_payload_last = axiArea_stage0_m2sPipe_rData_last;
-  assign axiArea_stage1_payload_fragment_addr = axiArea_stage0_m2sPipe_rData_fragment_addr;
-  assign axiArea_stage1_payload_fragment_id = axiArea_stage0_m2sPipe_rData_fragment_id;
-  assign axiArea_stage1_payload_fragment_size = axiArea_stage0_m2sPipe_rData_fragment_size;
-  assign axiArea_stage1_payload_fragment_burst = axiArea_stage0_m2sPipe_rData_fragment_burst;
-  assign axiArea_stage1_payload_fragment_write = axiArea_stage0_m2sPipe_rData_fragment_write;
-  assign axiArea_stage1_ready = ((io_axi_r_ready && (! axiArea_stage1_payload_fragment_write)) || ((io_axi_b_ready || (! axiArea_stage1_payload_last)) && axiArea_stage1_payload_fragment_write));
-  assign io_axi_r_valid = (axiArea_stage1_valid && (! axiArea_stage1_payload_fragment_write));
-  assign io_axi_r_payload_id = axiArea_stage1_payload_fragment_id;
-  assign io_axi_r_payload_last = axiArea_stage1_payload_last;
-  assign io_axi_r_payload_resp = 2'b00;
-  assign io_axi_b_valid = ((axiArea_stage1_valid && axiArea_stage1_payload_fragment_write) && axiArea_stage1_payload_last);
-  assign io_axi_b_payload_resp = 2'b00;
-  assign io_axi_b_payload_id = axiArea_stage1_payload_fragment_id;
+  assign logic_ptrMatch = (logic_pushPtr_value == logic_popPtr_value);
+  assign logic_pushing = (io_push_valid && io_push_ready);
+  assign logic_popping = (io_pop_valid && io_pop_ready);
+  assign logic_empty = (logic_ptrMatch && (! logic_risingOccupancy));
+  assign logic_full = (logic_ptrMatch && logic_risingOccupancy);
+  assign io_push_ready = (! logic_full);
+  assign io_pop_valid = ((! logic_empty) && (! (_zz_2 && (! logic_full))));
+  assign _zz_3 = _zz_4;
+  assign io_pop_payload_data = _zz_3[31 : 0];
+  assign io_pop_payload_id = _zz_3[35 : 32];
+  assign io_pop_payload_resp = _zz_3[37 : 36];
+  assign io_pop_payload_last = _zz_9[0];
+  assign logic_ptrDif = (logic_pushPtr_value - logic_popPtr_value);
+  assign io_occupancy = {(logic_risingOccupancy && logic_ptrMatch),logic_ptrDif};
+  assign io_availability = {((! logic_risingOccupancy) && logic_ptrMatch),_zz_10};
   always @ (posedge clk or posedge reset) begin
     if (reset) begin
-      wbArea_memRdyReg <= 1'b0;
-      unburstify_buffer_valid <= 1'b0;
-      axiArea_stage0_m2sPipe_rValid <= 1'b0;
+      logic_pushPtr_value <= 6'h0;
+      logic_popPtr_value <= 6'h0;
+      logic_risingOccupancy <= 1'b0;
+      _zz_2 <= 1'b0;
     end else begin
-      if(wbArea_wbVld)begin
-        wbArea_memRdyReg <= 1'b1;
-      end else begin
-        wbArea_memRdyReg <= 1'b0;
+      logic_pushPtr_value <= logic_pushPtr_valueNext;
+      logic_popPtr_value <= logic_popPtr_valueNext;
+      _zz_2 <= (logic_popPtr_valueNext == logic_pushPtr_value);
+      if((logic_pushing != logic_popping))begin
+        logic_risingOccupancy <= logic_pushing;
       end
-      if(unburstify_result_ready)begin
-        if(unburstify_buffer_last)begin
-          unburstify_buffer_valid <= 1'b0;
-        end
-      end
-      if(! unburstify_buffer_valid) begin
-        if(! _zz_11) begin
-          if(unburstify_result_ready)begin
-            unburstify_buffer_valid <= io_axi_arw_valid;
-          end
-        end
-      end
-      if(axiArea_stage0_ready)begin
-        axiArea_stage0_m2sPipe_rValid <= axiArea_stage0_valid;
+      if(io_flush)begin
+        logic_risingOccupancy <= 1'b0;
       end
     end
   end
 
+
+endmodule
+
+//StreamFifo_1 replaced by StreamFifo_1
+
+module StreamFifo_3 (
+  input               io_push_valid,
+  output              io_push_ready,
+  input      [3:0]    io_push_payload_id,
+  input      [1:0]    io_push_payload_resp,
+  output              io_pop_valid,
+  input               io_pop_ready,
+  output     [3:0]    io_pop_payload_id,
+  output     [1:0]    io_pop_payload_resp,
+  input               io_flush,
+  output     [6:0]    io_occupancy,
+  output     [6:0]    io_availability,
+  input               clk,
+  input               reset
+);
+  reg        [5:0]    _zz_4;
+  wire       [0:0]    _zz_5;
+  wire       [5:0]    _zz_6;
+  wire       [0:0]    _zz_7;
+  wire       [5:0]    _zz_8;
+  wire       [5:0]    _zz_9;
+  wire                _zz_10;
+  wire       [5:0]    _zz_11;
+  reg                 _zz_1;
+  reg                 logic_pushPtr_willIncrement;
+  reg                 logic_pushPtr_willClear;
+  reg        [5:0]    logic_pushPtr_valueNext;
+  reg        [5:0]    logic_pushPtr_value;
+  wire                logic_pushPtr_willOverflowIfInc;
+  wire                logic_pushPtr_willOverflow;
+  reg                 logic_popPtr_willIncrement;
+  reg                 logic_popPtr_willClear;
+  reg        [5:0]    logic_popPtr_valueNext;
+  reg        [5:0]    logic_popPtr_value;
+  wire                logic_popPtr_willOverflowIfInc;
+  wire                logic_popPtr_willOverflow;
+  wire                logic_ptrMatch;
+  reg                 logic_risingOccupancy;
+  wire                logic_pushing;
+  wire                logic_popping;
+  wire                logic_empty;
+  wire                logic_full;
+  reg                 _zz_2;
+  wire       [5:0]    _zz_3;
+  wire       [5:0]    logic_ptrDif;
+  reg [5:0] logic_ram [0:63];
+
+  assign _zz_5 = logic_pushPtr_willIncrement;
+  assign _zz_6 = {5'd0, _zz_5};
+  assign _zz_7 = logic_popPtr_willIncrement;
+  assign _zz_8 = {5'd0, _zz_7};
+  assign _zz_9 = (logic_popPtr_value - logic_pushPtr_value);
+  assign _zz_10 = 1'b1;
+  assign _zz_11 = {io_push_payload_resp,io_push_payload_id};
   always @ (posedge clk) begin
-    if(unburstify_result_ready)begin
-      unburstify_buffer_beat <= (unburstify_buffer_beat - 8'h01);
-      unburstify_buffer_transaction_addr[11 : 0] <= Axi4Incr_result[11 : 0];
+    if(_zz_10) begin
+      _zz_4 <= logic_ram[logic_popPtr_valueNext];
     end
-    if(! unburstify_buffer_valid) begin
-      if(! _zz_11) begin
-        if(unburstify_result_ready)begin
-          unburstify_buffer_transaction_addr <= io_axi_arw_payload_addr;
-          unburstify_buffer_transaction_id <= io_axi_arw_payload_id;
-          unburstify_buffer_transaction_size <= io_axi_arw_payload_size;
-          unburstify_buffer_transaction_burst <= io_axi_arw_payload_burst;
-          unburstify_buffer_transaction_write <= io_axi_arw_payload_write;
-          unburstify_buffer_beat <= io_axi_arw_payload_len;
-          unburstify_buffer_len <= io_axi_arw_payload_len;
-        end
+  end
+
+  always @ (posedge clk) begin
+    if(_zz_1) begin
+      logic_ram[logic_pushPtr_value] <= _zz_11;
+    end
+  end
+
+  always @ (*) begin
+    _zz_1 = 1'b0;
+    if(logic_pushing)begin
+      _zz_1 = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_pushPtr_willIncrement = 1'b0;
+    if(logic_pushing)begin
+      logic_pushPtr_willIncrement = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_pushPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_pushPtr_willClear = 1'b1;
+    end
+  end
+
+  assign logic_pushPtr_willOverflowIfInc = (logic_pushPtr_value == 6'h3f);
+  assign logic_pushPtr_willOverflow = (logic_pushPtr_willOverflowIfInc && logic_pushPtr_willIncrement);
+  always @ (*) begin
+    logic_pushPtr_valueNext = (logic_pushPtr_value + _zz_6);
+    if(logic_pushPtr_willClear)begin
+      logic_pushPtr_valueNext = 6'h0;
+    end
+  end
+
+  always @ (*) begin
+    logic_popPtr_willIncrement = 1'b0;
+    if(logic_popping)begin
+      logic_popPtr_willIncrement = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_popPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_popPtr_willClear = 1'b1;
+    end
+  end
+
+  assign logic_popPtr_willOverflowIfInc = (logic_popPtr_value == 6'h3f);
+  assign logic_popPtr_willOverflow = (logic_popPtr_willOverflowIfInc && logic_popPtr_willIncrement);
+  always @ (*) begin
+    logic_popPtr_valueNext = (logic_popPtr_value + _zz_8);
+    if(logic_popPtr_willClear)begin
+      logic_popPtr_valueNext = 6'h0;
+    end
+  end
+
+  assign logic_ptrMatch = (logic_pushPtr_value == logic_popPtr_value);
+  assign logic_pushing = (io_push_valid && io_push_ready);
+  assign logic_popping = (io_pop_valid && io_pop_ready);
+  assign logic_empty = (logic_ptrMatch && (! logic_risingOccupancy));
+  assign logic_full = (logic_ptrMatch && logic_risingOccupancy);
+  assign io_push_ready = (! logic_full);
+  assign io_pop_valid = ((! logic_empty) && (! (_zz_2 && (! logic_full))));
+  assign _zz_3 = _zz_4;
+  assign io_pop_payload_id = _zz_3[3 : 0];
+  assign io_pop_payload_resp = _zz_3[5 : 4];
+  assign logic_ptrDif = (logic_pushPtr_value - logic_popPtr_value);
+  assign io_occupancy = {(logic_risingOccupancy && logic_ptrMatch),logic_ptrDif};
+  assign io_availability = {((! logic_risingOccupancy) && logic_ptrMatch),_zz_9};
+  always @ (posedge clk or posedge reset) begin
+    if (reset) begin
+      logic_pushPtr_value <= 6'h0;
+      logic_popPtr_value <= 6'h0;
+      logic_risingOccupancy <= 1'b0;
+      _zz_2 <= 1'b0;
+    end else begin
+      logic_pushPtr_value <= logic_pushPtr_valueNext;
+      logic_popPtr_value <= logic_popPtr_valueNext;
+      _zz_2 <= (logic_popPtr_valueNext == logic_pushPtr_value);
+      if((logic_pushing != logic_popping))begin
+        logic_risingOccupancy <= logic_pushing;
+      end
+      if(io_flush)begin
+        logic_risingOccupancy <= 1'b0;
       end
     end
-    if(axiArea_stage0_ready)begin
-      axiArea_stage0_m2sPipe_rData_last <= axiArea_stage0_payload_last;
-      axiArea_stage0_m2sPipe_rData_fragment_addr <= axiArea_stage0_payload_fragment_addr;
-      axiArea_stage0_m2sPipe_rData_fragment_id <= axiArea_stage0_payload_fragment_id;
-      axiArea_stage0_m2sPipe_rData_fragment_size <= axiArea_stage0_payload_fragment_size;
-      axiArea_stage0_m2sPipe_rData_fragment_burst <= axiArea_stage0_payload_fragment_burst;
-      axiArea_stage0_m2sPipe_rData_fragment_write <= axiArea_stage0_payload_fragment_write;
+  end
+
+
+endmodule
+
+module StreamFifo_2 (
+  input               io_push_valid,
+  output              io_push_ready,
+  input      [31:0]   io_push_payload_data,
+  input      [3:0]    io_push_payload_strb,
+  input               io_push_payload_last,
+  output              io_pop_valid,
+  input               io_pop_ready,
+  output     [31:0]   io_pop_payload_data,
+  output     [3:0]    io_pop_payload_strb,
+  output              io_pop_payload_last,
+  input               io_flush,
+  output     [6:0]    io_occupancy,
+  output     [6:0]    io_availability,
+  input               clk,
+  input               reset
+);
+  reg        [36:0]   _zz_4;
+  wire       [0:0]    _zz_5;
+  wire       [5:0]    _zz_6;
+  wire       [0:0]    _zz_7;
+  wire       [5:0]    _zz_8;
+  wire       [0:0]    _zz_9;
+  wire       [5:0]    _zz_10;
+  wire                _zz_11;
+  wire       [36:0]   _zz_12;
+  reg                 _zz_1;
+  reg                 logic_pushPtr_willIncrement;
+  reg                 logic_pushPtr_willClear;
+  reg        [5:0]    logic_pushPtr_valueNext;
+  reg        [5:0]    logic_pushPtr_value;
+  wire                logic_pushPtr_willOverflowIfInc;
+  wire                logic_pushPtr_willOverflow;
+  reg                 logic_popPtr_willIncrement;
+  reg                 logic_popPtr_willClear;
+  reg        [5:0]    logic_popPtr_valueNext;
+  reg        [5:0]    logic_popPtr_value;
+  wire                logic_popPtr_willOverflowIfInc;
+  wire                logic_popPtr_willOverflow;
+  wire                logic_ptrMatch;
+  reg                 logic_risingOccupancy;
+  wire                logic_pushing;
+  wire                logic_popping;
+  wire                logic_empty;
+  wire                logic_full;
+  reg                 _zz_2;
+  wire       [36:0]   _zz_3;
+  wire       [5:0]    logic_ptrDif;
+  reg [36:0] logic_ram [0:63];
+
+  assign _zz_5 = logic_pushPtr_willIncrement;
+  assign _zz_6 = {5'd0, _zz_5};
+  assign _zz_7 = logic_popPtr_willIncrement;
+  assign _zz_8 = {5'd0, _zz_7};
+  assign _zz_9 = _zz_3[36 : 36];
+  assign _zz_10 = (logic_popPtr_value - logic_pushPtr_value);
+  assign _zz_11 = 1'b1;
+  assign _zz_12 = {io_push_payload_last,{io_push_payload_strb,io_push_payload_data}};
+  always @ (posedge clk) begin
+    if(_zz_11) begin
+      _zz_4 <= logic_ram[logic_popPtr_valueNext];
+    end
+  end
+
+  always @ (posedge clk) begin
+    if(_zz_1) begin
+      logic_ram[logic_pushPtr_value] <= _zz_12;
+    end
+  end
+
+  always @ (*) begin
+    _zz_1 = 1'b0;
+    if(logic_pushing)begin
+      _zz_1 = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_pushPtr_willIncrement = 1'b0;
+    if(logic_pushing)begin
+      logic_pushPtr_willIncrement = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_pushPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_pushPtr_willClear = 1'b1;
+    end
+  end
+
+  assign logic_pushPtr_willOverflowIfInc = (logic_pushPtr_value == 6'h3f);
+  assign logic_pushPtr_willOverflow = (logic_pushPtr_willOverflowIfInc && logic_pushPtr_willIncrement);
+  always @ (*) begin
+    logic_pushPtr_valueNext = (logic_pushPtr_value + _zz_6);
+    if(logic_pushPtr_willClear)begin
+      logic_pushPtr_valueNext = 6'h0;
+    end
+  end
+
+  always @ (*) begin
+    logic_popPtr_willIncrement = 1'b0;
+    if(logic_popping)begin
+      logic_popPtr_willIncrement = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_popPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_popPtr_willClear = 1'b1;
+    end
+  end
+
+  assign logic_popPtr_willOverflowIfInc = (logic_popPtr_value == 6'h3f);
+  assign logic_popPtr_willOverflow = (logic_popPtr_willOverflowIfInc && logic_popPtr_willIncrement);
+  always @ (*) begin
+    logic_popPtr_valueNext = (logic_popPtr_value + _zz_8);
+    if(logic_popPtr_willClear)begin
+      logic_popPtr_valueNext = 6'h0;
+    end
+  end
+
+  assign logic_ptrMatch = (logic_pushPtr_value == logic_popPtr_value);
+  assign logic_pushing = (io_push_valid && io_push_ready);
+  assign logic_popping = (io_pop_valid && io_pop_ready);
+  assign logic_empty = (logic_ptrMatch && (! logic_risingOccupancy));
+  assign logic_full = (logic_ptrMatch && logic_risingOccupancy);
+  assign io_push_ready = (! logic_full);
+  assign io_pop_valid = ((! logic_empty) && (! (_zz_2 && (! logic_full))));
+  assign _zz_3 = _zz_4;
+  assign io_pop_payload_data = _zz_3[31 : 0];
+  assign io_pop_payload_strb = _zz_3[35 : 32];
+  assign io_pop_payload_last = _zz_9[0];
+  assign logic_ptrDif = (logic_pushPtr_value - logic_popPtr_value);
+  assign io_occupancy = {(logic_risingOccupancy && logic_ptrMatch),logic_ptrDif};
+  assign io_availability = {((! logic_risingOccupancy) && logic_ptrMatch),_zz_10};
+  always @ (posedge clk or posedge reset) begin
+    if (reset) begin
+      logic_pushPtr_value <= 6'h0;
+      logic_popPtr_value <= 6'h0;
+      logic_risingOccupancy <= 1'b0;
+      _zz_2 <= 1'b0;
+    end else begin
+      logic_pushPtr_value <= logic_pushPtr_valueNext;
+      logic_popPtr_value <= logic_popPtr_valueNext;
+      _zz_2 <= (logic_popPtr_valueNext == logic_pushPtr_value);
+      if((logic_pushing != logic_popping))begin
+        logic_risingOccupancy <= logic_pushing;
+      end
+      if(io_flush)begin
+        logic_risingOccupancy <= 1'b0;
+      end
+    end
+  end
+
+
+endmodule
+
+module StreamFifo_1 (
+  input               io_push_valid,
+  output              io_push_ready,
+  input      [31:0]   io_push_payload_addr,
+  input      [3:0]    io_push_payload_id,
+  input      [7:0]    io_push_payload_len,
+  input      [2:0]    io_push_payload_size,
+  input      [1:0]    io_push_payload_burst,
+  output              io_pop_valid,
+  input               io_pop_ready,
+  output     [31:0]   io_pop_payload_addr,
+  output     [3:0]    io_pop_payload_id,
+  output     [7:0]    io_pop_payload_len,
+  output     [2:0]    io_pop_payload_size,
+  output     [1:0]    io_pop_payload_burst,
+  input               io_flush,
+  output     [6:0]    io_occupancy,
+  output     [6:0]    io_availability,
+  input               clk,
+  input               reset
+);
+  reg        [48:0]   _zz_4;
+  wire       [0:0]    _zz_5;
+  wire       [5:0]    _zz_6;
+  wire       [0:0]    _zz_7;
+  wire       [5:0]    _zz_8;
+  wire       [5:0]    _zz_9;
+  wire                _zz_10;
+  wire       [48:0]   _zz_11;
+  reg                 _zz_1;
+  reg                 logic_pushPtr_willIncrement;
+  reg                 logic_pushPtr_willClear;
+  reg        [5:0]    logic_pushPtr_valueNext;
+  reg        [5:0]    logic_pushPtr_value;
+  wire                logic_pushPtr_willOverflowIfInc;
+  wire                logic_pushPtr_willOverflow;
+  reg                 logic_popPtr_willIncrement;
+  reg                 logic_popPtr_willClear;
+  reg        [5:0]    logic_popPtr_valueNext;
+  reg        [5:0]    logic_popPtr_value;
+  wire                logic_popPtr_willOverflowIfInc;
+  wire                logic_popPtr_willOverflow;
+  wire                logic_ptrMatch;
+  reg                 logic_risingOccupancy;
+  wire                logic_pushing;
+  wire                logic_popping;
+  wire                logic_empty;
+  wire                logic_full;
+  reg                 _zz_2;
+  wire       [48:0]   _zz_3;
+  wire       [5:0]    logic_ptrDif;
+  reg [48:0] logic_ram [0:63];
+
+  assign _zz_5 = logic_pushPtr_willIncrement;
+  assign _zz_6 = {5'd0, _zz_5};
+  assign _zz_7 = logic_popPtr_willIncrement;
+  assign _zz_8 = {5'd0, _zz_7};
+  assign _zz_9 = (logic_popPtr_value - logic_pushPtr_value);
+  assign _zz_10 = 1'b1;
+  assign _zz_11 = {io_push_payload_burst,{io_push_payload_size,{io_push_payload_len,{io_push_payload_id,io_push_payload_addr}}}};
+  always @ (posedge clk) begin
+    if(_zz_10) begin
+      _zz_4 <= logic_ram[logic_popPtr_valueNext];
+    end
+  end
+
+  always @ (posedge clk) begin
+    if(_zz_1) begin
+      logic_ram[logic_pushPtr_value] <= _zz_11;
+    end
+  end
+
+  always @ (*) begin
+    _zz_1 = 1'b0;
+    if(logic_pushing)begin
+      _zz_1 = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_pushPtr_willIncrement = 1'b0;
+    if(logic_pushing)begin
+      logic_pushPtr_willIncrement = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_pushPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_pushPtr_willClear = 1'b1;
+    end
+  end
+
+  assign logic_pushPtr_willOverflowIfInc = (logic_pushPtr_value == 6'h3f);
+  assign logic_pushPtr_willOverflow = (logic_pushPtr_willOverflowIfInc && logic_pushPtr_willIncrement);
+  always @ (*) begin
+    logic_pushPtr_valueNext = (logic_pushPtr_value + _zz_6);
+    if(logic_pushPtr_willClear)begin
+      logic_pushPtr_valueNext = 6'h0;
+    end
+  end
+
+  always @ (*) begin
+    logic_popPtr_willIncrement = 1'b0;
+    if(logic_popping)begin
+      logic_popPtr_willIncrement = 1'b1;
+    end
+  end
+
+  always @ (*) begin
+    logic_popPtr_willClear = 1'b0;
+    if(io_flush)begin
+      logic_popPtr_willClear = 1'b1;
+    end
+  end
+
+  assign logic_popPtr_willOverflowIfInc = (logic_popPtr_value == 6'h3f);
+  assign logic_popPtr_willOverflow = (logic_popPtr_willOverflowIfInc && logic_popPtr_willIncrement);
+  always @ (*) begin
+    logic_popPtr_valueNext = (logic_popPtr_value + _zz_8);
+    if(logic_popPtr_willClear)begin
+      logic_popPtr_valueNext = 6'h0;
+    end
+  end
+
+  assign logic_ptrMatch = (logic_pushPtr_value == logic_popPtr_value);
+  assign logic_pushing = (io_push_valid && io_push_ready);
+  assign logic_popping = (io_pop_valid && io_pop_ready);
+  assign logic_empty = (logic_ptrMatch && (! logic_risingOccupancy));
+  assign logic_full = (logic_ptrMatch && logic_risingOccupancy);
+  assign io_push_ready = (! logic_full);
+  assign io_pop_valid = ((! logic_empty) && (! (_zz_2 && (! logic_full))));
+  assign _zz_3 = _zz_4;
+  assign io_pop_payload_addr = _zz_3[31 : 0];
+  assign io_pop_payload_id = _zz_3[35 : 32];
+  assign io_pop_payload_len = _zz_3[43 : 36];
+  assign io_pop_payload_size = _zz_3[46 : 44];
+  assign io_pop_payload_burst = _zz_3[48 : 47];
+  assign logic_ptrDif = (logic_pushPtr_value - logic_popPtr_value);
+  assign io_occupancy = {(logic_risingOccupancy && logic_ptrMatch),logic_ptrDif};
+  assign io_availability = {((! logic_risingOccupancy) && logic_ptrMatch),_zz_9};
+  always @ (posedge clk or posedge reset) begin
+    if (reset) begin
+      logic_pushPtr_value <= 6'h0;
+      logic_popPtr_value <= 6'h0;
+      logic_risingOccupancy <= 1'b0;
+      _zz_2 <= 1'b0;
+    end else begin
+      logic_pushPtr_value <= logic_pushPtr_valueNext;
+      logic_popPtr_value <= logic_popPtr_valueNext;
+      _zz_2 <= (logic_popPtr_valueNext == logic_pushPtr_value);
+      if((logic_pushing != logic_popping))begin
+        logic_risingOccupancy <= logic_pushing;
+      end
+      if(io_flush)begin
+        logic_risingOccupancy <= 1'b0;
+      end
     end
   end
 

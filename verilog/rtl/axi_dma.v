@@ -129,6 +129,34 @@ module axi_dma #(
 */
 
 DmaMem u_DmaMem(
+    .io_ctrl_start           (io_oeb[22]    ), //i
+    .io_ctrl_busy            (irq[1]        ), //o
+    .io_ctrl_done            (irq[0]        ), //o
+    .io_ctrl_halt            (io_oeb[23]    ), //i
+    .io_sdram_ADDR           (io_oeb[12:0]  ), //o
+    .io_sdram_BA             (io_oeb[14:13] ), //o
+    .io_sdram_DQ_read        (io_in[15:0]   ), //i
+    .io_sdram_DQ_write       (io_out[15:0]  ), //o
+    .io_sdram_DQ_writeEnable (io_out[31:16] ), //o
+    .io_sdram_DQM            (io_oeb[16:15] ), //o
+    .io_sdram_CASn           (io_oeb[17]    ), //o
+    .io_sdram_CKE            (io_oeb[18]    ), //o
+    .io_sdram_CSn            (io_oeb[19]    ), //o
+    .io_sdram_RASn           (io_oeb[20]    ), //o
+    .io_sdram_WEn            (io_oeb[21]    ), //o
+    .io_wb_CYC               (wbs_cyc_i     ), //i
+    .io_wb_STB               (wbs_stb_i     ), //i
+    .io_wb_ACK               (wbs_ack_o     ), //o
+    .io_wb_WE                (wbs_we_i      ), //i
+    .io_wb_ADR               (wbs_adr_i     ), //i
+    .io_wb_DAT_MISO          (wbs_dat_o     ), //o
+    .io_wb_DAT_MOSI          (wbs_dat_i     ), //i
+    .io_wb_SEL               (wbs_sel_i     ), //i
+    .clk                     (wb_clk_i      ), //i
+    .reset                   (wb_rst_i      )  //i
+);
+/*
+DmaMem u_DmaMem(
     .io_wb_CYC      (wbs_cyc_i),
     .io_wb_STB      (wbs_stb_i),
     .io_wb_ACK      (wbs_ack_o),
@@ -144,7 +172,7 @@ DmaMem u_DmaMem(
     .clk            (wb_clk_i ),
     .reset          (wb_rst_i )
 );
-
+*/
 endmodule
 /*
 module counter #(

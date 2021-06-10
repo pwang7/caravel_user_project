@@ -7,7 +7,7 @@ make install
 
 export PROJ_HOME=`pwd`
 export OPENLANE_ROOT=`realpath $PROJ_HOME/../openlane`
-export OPENLANE_TAG="v0.17"
+export OPENLANE_TAG="v0.18"
 
 #make simenv
 export PDK_ROOT=$OPENLANE_ROOT/pdks
@@ -33,3 +33,5 @@ export TARGET_PATH=$PROJ_HOME
 
 make axi_dma
 make user_project_wrapper
+make compress
+#make ship
