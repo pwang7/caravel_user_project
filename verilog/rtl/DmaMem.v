@@ -32,16 +32,16 @@
 `define initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2 3'b100
 `define initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG 3'b101
 
-`define refreshFsm_enumDefinition_binary_sequential_type [1:0]
-`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT 2'b00
-`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE 2'b01
-`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH 2'b10
-
 `define writeFsm_enumDefinition_binary_sequential_type [1:0]
 `define writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT 2'b00
 `define writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE 2'b01
 `define writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE 2'b10
 `define writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE 2'b11
+
+`define refreshFsm_enumDefinition_binary_sequential_type [1:0]
+`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT 2'b00
+`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE 2'b01
+`define refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH 2'b10
 
 `define fsm_enumDefinition_binary_sequential_type [2:0]
 `define fsm_enumDefinition_binary_sequential_fsm_BOOT 3'b000
@@ -404,13 +404,11 @@ module SdramController (
   wire       [7:0]    _zz_31;
   wire       [7:0]    _zz_32;
   wire       [8:0]    _zz_33;
-  wire       [13:0]   _zz_34;
-  wire       [7:0]    _zz_35;
-  wire       [1:0]    _zz_36;
-  wire       [15:0]   _zz_37;
-  wire       [8:0]    _zz_38;
-  wire       [13:0]   _zz_39;
-  wire       [7:0]    _zz_40;
+  wire       [7:0]    _zz_34;
+  wire       [1:0]    _zz_35;
+  wire       [15:0]   _zz_36;
+  wire       [8:0]    _zz_37;
+  wire       [7:0]    _zz_38;
   wire       [3:0]    CMD_UNSELECTED;
   wire       [3:0]    CMD_NOP;
   wire       [3:0]    CMD_ACTIVE;
@@ -438,7 +436,9 @@ module SdramController (
   wire       [1:0]    writeMask;
   wire       [15:0]   busWrite;
   reg        [1:0]    mask;
-  reg        [13:0]   stateCounter_counter;
+  reg        [13:0]   initCounter_counter;
+  wire                initCounter_busy;
+  reg        [2:0]    stateCounter_counter;
   wire                stateCounter_busy;
   wire                refreshCounter_willIncrement;
   wire                refreshCounter_willClear;
@@ -469,12 +469,12 @@ module SdramController (
   wire                _zz_2;
   reg        `initFsm_enumDefinition_binary_sequential_type initFsm_stateReg;
   reg        `initFsm_enumDefinition_binary_sequential_type initFsm_stateNext;
-  reg        `refreshFsm_enumDefinition_binary_sequential_type refreshFsm_stateReg;
-  reg        `refreshFsm_enumDefinition_binary_sequential_type refreshFsm_stateNext;
-  wire                _zz_3;
-  wire                _zz_4;
   reg        `writeFsm_enumDefinition_binary_sequential_type writeFsm_stateReg;
   reg        `writeFsm_enumDefinition_binary_sequential_type writeFsm_stateNext;
+  wire                _zz_3;
+  wire                _zz_4;
+  reg        `refreshFsm_enumDefinition_binary_sequential_type refreshFsm_stateReg;
+  reg        `refreshFsm_enumDefinition_binary_sequential_type refreshFsm_stateNext;
   wire                _zz_5;
   wire                _zz_6;
   reg        `fsm_enumDefinition_binary_sequential_type fsm_stateReg;
@@ -486,10 +486,10 @@ module SdramController (
   reg [167:0] readFsm_stateNext_string;
   reg [207:0] initFsm_stateReg_string;
   reg [207:0] initFsm_stateNext_string;
-  reg [223:0] refreshFsm_stateReg_string;
-  reg [223:0] refreshFsm_stateNext_string;
   reg [167:0] writeFsm_stateReg_string;
   reg [167:0] writeFsm_stateNext_string;
+  reg [223:0] refreshFsm_stateReg_string;
+  reg [223:0] refreshFsm_stateNext_string;
   reg [103:0] fsm_stateReg_string;
   reg [103:0] fsm_stateNext_string;
   `endif
@@ -498,24 +498,22 @@ module SdramController (
   assign _zz_20 = ((! (writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE)) && (writeFsm_stateNext == `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE));
   assign _zz_21 = (2'b00 < busDataShiftCnt);
   assign _zz_22 = ((! (writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE)) && (writeFsm_stateNext == `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE));
-  assign _zz_23 = (_zz_5 && (! _zz_6));
+  assign _zz_23 = (_zz_3 && (! _zz_4));
   assign _zz_24 = ((! (readFsm_stateReg == `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE)) && (readFsm_stateNext == `readFsm_enumDefinition_binary_sequential_readFsm_ACTIVE));
   assign _zz_25 = (! stateCounter_busy);
   assign _zz_26 = (! stateCounter_busy);
-  assign _zz_27 = (stateCounter_counter == 14'h0003);
+  assign _zz_27 = (stateCounter_counter == 3'b011);
   assign _zz_28 = (! stateCounter_busy);
   assign _zz_29 = refreshCounter_willIncrement;
   assign _zz_30 = {9'd0, _zz_29};
   assign _zz_31 = {1'd0, rFifo_io_availability};
   assign _zz_32 = {1'd0, wFifo_io_occupancy};
   assign _zz_33 = ({1'd0,arFifo_io_pop_payload_len} <<< 1);
-  assign _zz_34 = {6'd0, burstLenReg};
-  assign _zz_35 = (burstLenReg - 8'h01);
-  assign _zz_36 = (strobeReg >>> 2);
-  assign _zz_37 = (busWriteDataReg >>> 16);
-  assign _zz_38 = ({1'd0,awFifo_io_pop_payload_len} <<< 1);
-  assign _zz_39 = {6'd0, burstLenReg};
-  assign _zz_40 = (burstLenReg - 8'h01);
+  assign _zz_34 = (burstLenReg - 8'h01);
+  assign _zz_35 = (strobeReg >>> 2);
+  assign _zz_36 = (busWriteDataReg >>> 16);
+  assign _zz_37 = ({1'd0,awFifo_io_pop_payload_len} <<< 1);
+  assign _zz_38 = (burstLenReg - 8'h01);
   StreamFifo_1 awFifo (
     .io_push_valid            (io_axi_aw_valid                   ), //i
     .io_push_ready            (awFifo_io_push_ready              ), //o
@@ -651,22 +649,6 @@ module SdramController (
     endcase
   end
   always @(*) begin
-    case(refreshFsm_stateReg)
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT : refreshFsm_stateReg_string = "refreshFsm_BOOT             ";
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : refreshFsm_stateReg_string = "refreshFsm_REFRESH_PRECHARGE";
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : refreshFsm_stateReg_string = "refreshFsm_REFRESH          ";
-      default : refreshFsm_stateReg_string = "????????????????????????????";
-    endcase
-  end
-  always @(*) begin
-    case(refreshFsm_stateNext)
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT : refreshFsm_stateNext_string = "refreshFsm_BOOT             ";
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : refreshFsm_stateNext_string = "refreshFsm_REFRESH_PRECHARGE";
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : refreshFsm_stateNext_string = "refreshFsm_REFRESH          ";
-      default : refreshFsm_stateNext_string = "????????????????????????????";
-    endcase
-  end
-  always @(*) begin
     case(writeFsm_stateReg)
       `writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT : writeFsm_stateReg_string = "writeFsm_BOOT        ";
       `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : writeFsm_stateReg_string = "writeFsm_ACTIVE_WRITE";
@@ -682,6 +664,22 @@ module SdramController (
       `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : writeFsm_stateNext_string = "writeFsm_BURST_WRITE ";
       `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE : writeFsm_stateNext_string = "writeFsm_TERM_WRITE  ";
       default : writeFsm_stateNext_string = "?????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(refreshFsm_stateReg)
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT : refreshFsm_stateReg_string = "refreshFsm_BOOT             ";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : refreshFsm_stateReg_string = "refreshFsm_REFRESH_PRECHARGE";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : refreshFsm_stateReg_string = "refreshFsm_REFRESH          ";
+      default : refreshFsm_stateReg_string = "????????????????????????????";
+    endcase
+  end
+  always @(*) begin
+    case(refreshFsm_stateNext)
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT : refreshFsm_stateNext_string = "refreshFsm_BOOT             ";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : refreshFsm_stateNext_string = "refreshFsm_REFRESH_PRECHARGE";
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : refreshFsm_stateNext_string = "refreshFsm_REFRESH          ";
+      default : refreshFsm_stateNext_string = "????????????????????????????";
     endcase
   end
   always @(*) begin
@@ -794,7 +792,8 @@ module SdramController (
     end
   end
 
-  assign stateCounter_busy = (stateCounter_counter != 14'h0);
+  assign initCounter_busy = (initCounter_counter != 14'h0);
+  assign stateCounter_busy = (stateCounter_counter != 3'b000);
   assign refreshCounter_willClear = 1'b0;
   assign refreshCounter_willOverflowIfInc = (refreshCounter_value == 10'h30d);
   assign refreshCounter_willOverflow = (refreshCounter_willOverflowIfInc && refreshCounter_willIncrement);
@@ -987,7 +986,7 @@ module SdramController (
     initFsm_stateNext = initFsm_stateReg;
     case(initFsm_stateReg)
       `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT : begin
-        if((! stateCounter_busy))begin
+        if((! initCounter_busy))begin
           initFsm_stateNext = `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE;
         end
       end
@@ -1019,31 +1018,8 @@ module SdramController (
     end
   end
 
-  assign _zz_3 = (refreshFsm_stateReg == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH);
-  assign _zz_4 = (refreshFsm_stateNext == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH);
-  always @ (*) begin
-    refreshFsm_stateNext = refreshFsm_stateReg;
-    case(refreshFsm_stateReg)
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : begin
-        if((! stateCounter_busy))begin
-          refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH;
-        end
-      end
-      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : begin
-        if(_zz_26)begin
-          refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT;
-        end
-      end
-      default : begin
-      end
-    endcase
-    if(refreshFsm_wantStart)begin
-      refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE;
-    end
-  end
-
-  assign _zz_5 = (writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE);
-  assign _zz_6 = (writeFsm_stateNext == `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE);
+  assign _zz_3 = (writeFsm_stateReg == `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE);
+  assign _zz_4 = (writeFsm_stateNext == `writeFsm_enumDefinition_binary_sequential_writeFsm_TERM_WRITE);
   always @ (*) begin
     writeFsm_stateNext = writeFsm_stateReg;
     case(writeFsm_stateReg)
@@ -1065,6 +1041,29 @@ module SdramController (
     endcase
     if(writeFsm_wantStart)begin
       writeFsm_stateNext = `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE;
+    end
+  end
+
+  assign _zz_5 = (refreshFsm_stateReg == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH);
+  assign _zz_6 = (refreshFsm_stateNext == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH);
+  always @ (*) begin
+    refreshFsm_stateNext = refreshFsm_stateReg;
+    case(refreshFsm_stateReg)
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE : begin
+        if((! stateCounter_busy))begin
+          refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH;
+        end
+      end
+      `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH : begin
+        if(_zz_26)begin
+          refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT;
+        end
+      end
+      default : begin
+      end
+    endcase
+    if(refreshFsm_wantStart)begin
+      refreshFsm_stateNext = `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE;
     end
   end
 
@@ -1144,14 +1143,15 @@ module SdramController (
       strobeReg <= 4'b0000;
       busWriteDataReg <= 32'h0;
       busDataShiftCnt <= 2'b00;
-      stateCounter_counter <= 14'h0;
+      initCounter_counter <= 14'h0;
+      stateCounter_counter <= 3'b000;
       refreshCounter_value <= 10'h0;
       refreshReqReg <= 1'b0;
       preReqIsWriteReg <= 1'b0;
       readFsm_stateReg <= `readFsm_enumDefinition_binary_sequential_readFsm_BOOT;
       initFsm_stateReg <= `initFsm_enumDefinition_binary_sequential_initFsm_BOOT;
-      refreshFsm_stateReg <= `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT;
       writeFsm_stateReg <= `writeFsm_enumDefinition_binary_sequential_writeFsm_BOOT;
+      refreshFsm_stateReg <= `refreshFsm_enumDefinition_binary_sequential_refreshFsm_BOOT;
       fsm_stateReg <= `fsm_enumDefinition_binary_sequential_fsm_BOOT;
     end else begin
       commandReg <= CMD_NOP;
@@ -1183,8 +1183,11 @@ module SdramController (
           end
         `endif
       `endif
+      if(initCounter_busy)begin
+        initCounter_counter <= (initCounter_counter - 14'h0001);
+      end
       if(stateCounter_busy)begin
-        stateCounter_counter <= (stateCounter_counter - 14'h0001);
+        stateCounter_counter <= (stateCounter_counter - 3'b001);
       end
       refreshCounter_value <= refreshCounter_valueNext;
       if(startBurstReadReg)begin
@@ -1228,68 +1231,55 @@ module SdramController (
         columnAddrReg <= arFifo_io_pop_payload_addr[8 : 0];
         opIdReg <= arFifo_io_pop_payload_id;
         burstLenReg <= _zz_33[7:0];
-        stateCounter_counter <= 14'h0001;
+        stateCounter_counter <= 3'b001;
       end
       if(((! (readFsm_stateReg == `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD)) && (readFsm_stateNext == `readFsm_enumDefinition_binary_sequential_readFsm_SEND_READ_CMD)))begin
         addressReg <= {4'd0, columnAddrReg};
         commandReg <= CMD_READ;
-        stateCounter_counter <= 14'h0002;
+        stateCounter_counter <= 3'b010;
       end
       if(((! _zz_1) && _zz_2))begin
         `ifndef SYNTHESIS
           `ifdef FORMAL
-            assert(((_zz_34 <= 14'h2710) && (8'h0 < burstLenReg)));
+            assert(((burstLenReg <= 8'h07) && (8'h0 < burstLenReg)));
           `else
-            if(!((_zz_34 <= 14'h2710) && (8'h0 < burstLenReg))) begin
-              $display("FAILURE invalid counter cycle: (toplevel/[SdramController]/burstLenReg :  UInt[8 bits])");
+            if(!((burstLenReg <= 8'h07) && (8'h0 < burstLenReg))) begin
+              $display("FAILURE invalid counter cycle=(toplevel/[SdramController]/burstLenReg :  UInt[8 bits]), cycleMax=7");
               $finish;
             end
           `endif
         `endif
-        stateCounter_counter <= {6'd0, _zz_35};
+        stateCounter_counter <= _zz_34[2:0];
       end
       initFsm_stateReg <= initFsm_stateNext;
       if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_WAIT)))begin
-        stateCounter_counter <= 14'h270f;
+        initCounter_counter <= 14'h270f;
       end
       if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_PRECHARGE)))begin
         addressReg <= 13'h0400;
         commandReg <= CMD_PRECHARGE;
-        stateCounter_counter <= 14'h0001;
+        stateCounter_counter <= 3'b001;
       end
       if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_1)))begin
         commandReg <= CMD_REFRESH;
-        stateCounter_counter <= 14'h0006;
+        stateCounter_counter <= 3'b110;
       end
       if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_REFRESH_2)))begin
         commandReg <= CMD_REFRESH;
-        stateCounter_counter <= 14'h0006;
+        stateCounter_counter <= 3'b110;
       end
       if(((! (initFsm_stateReg == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG)) && (initFsm_stateNext == `initFsm_enumDefinition_binary_sequential_initFsm_INIT_LOAD_MODE_REG)))begin
         addressReg <= MODE_VALUE;
         commandReg <= CMD_LOAD_MODE_REG;
-        stateCounter_counter <= 14'h0001;
-      end
-      refreshFsm_stateReg <= refreshFsm_stateNext;
-      if((_zz_3 && (! _zz_4)))begin
-        refreshReqReg <= 1'b0;
-      end
-      if(((! (refreshFsm_stateReg == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE)) && (refreshFsm_stateNext == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE)))begin
-        addressReg <= 13'h0400;
-        commandReg <= CMD_REFRESH;
-        stateCounter_counter <= 14'h0001;
-      end
-      if(((! _zz_3) && _zz_4))begin
-        commandReg <= CMD_PRECHARGE;
-        stateCounter_counter <= 14'h0006;
+        stateCounter_counter <= 3'b001;
       end
       writeFsm_stateReg <= writeFsm_stateNext;
       case(writeFsm_stateReg)
         `writeFsm_enumDefinition_binary_sequential_writeFsm_ACTIVE_WRITE : begin
         end
         `writeFsm_enumDefinition_binary_sequential_writeFsm_BURST_WRITE : begin
-          strobeReg <= {2'd0, _zz_36};
-          busWriteDataReg <= {16'd0, _zz_37};
+          strobeReg <= {2'd0, _zz_35};
+          busWriteDataReg <= {16'd0, _zz_36};
           if(_zz_21)begin
             busDataShiftCnt <= (busDataShiftCnt - 2'b01);
           end else begin
@@ -1312,29 +1302,42 @@ module SdramController (
         addressReg <= awFifo_io_pop_payload_addr[21 : 9];
         columnAddrReg <= awFifo_io_pop_payload_addr[8 : 0];
         opIdReg <= awFifo_io_pop_payload_id;
-        burstLenReg <= _zz_38[7:0];
-        stateCounter_counter <= 14'h0001;
+        burstLenReg <= _zz_37[7:0];
+        stateCounter_counter <= 3'b001;
       end
       if(_zz_22)begin
         addressReg <= {4'd0, columnAddrReg};
         commandReg <= CMD_WRITE;
         `ifndef SYNTHESIS
           `ifdef FORMAL
-            assert(((_zz_39 <= 14'h2710) && (8'h0 < burstLenReg)));
+            assert(((burstLenReg <= 8'h07) && (8'h0 < burstLenReg)));
           `else
-            if(!((_zz_39 <= 14'h2710) && (8'h0 < burstLenReg))) begin
-              $display("FAILURE invalid counter cycle: (toplevel/[SdramController]/burstLenReg :  UInt[8 bits])");
+            if(!((burstLenReg <= 8'h07) && (8'h0 < burstLenReg))) begin
+              $display("FAILURE invalid counter cycle=(toplevel/[SdramController]/burstLenReg :  UInt[8 bits]), cycleMax=7");
               $finish;
             end
           `endif
         `endif
-        stateCounter_counter <= {6'd0, _zz_40};
+        stateCounter_counter <= _zz_38[2:0];
         strobeReg <= wFifo_io_pop_payload_strb;
         busWriteDataReg <= wFifo_io_pop_payload_data;
         busDataShiftCnt <= 2'b01;
       end
-      if(((! _zz_5) && _zz_6))begin
+      if(((! _zz_3) && _zz_4))begin
         commandReg <= CMD_BURST_TERMINATE;
+      end
+      refreshFsm_stateReg <= refreshFsm_stateNext;
+      if((_zz_5 && (! _zz_6)))begin
+        refreshReqReg <= 1'b0;
+      end
+      if(((! (refreshFsm_stateReg == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE)) && (refreshFsm_stateNext == `refreshFsm_enumDefinition_binary_sequential_refreshFsm_REFRESH_PRECHARGE)))begin
+        addressReg <= 13'h0400;
+        commandReg <= CMD_REFRESH;
+        stateCounter_counter <= 3'b001;
+      end
+      if(((! _zz_5) && _zz_6))begin
+        commandReg <= CMD_PRECHARGE;
+        stateCounter_counter <= 3'b110;
       end
       fsm_stateReg <= fsm_stateNext;
       if(((! (fsm_stateReg == `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE)) && (fsm_stateNext == `fsm_enumDefinition_binary_sequential_fsm_PRECHARGE)))begin
