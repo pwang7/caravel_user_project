@@ -49,22 +49,22 @@ To test the SDRAM controller, Micron provided an SDRAM reference model in Verilo
 
 ## Code Structure
 
-To compatible with Caravel user project, the Spinal HDL, cocotb code is seperated from Caravel user project code.
+To compatible with Caravel user project, the Spinal HDL, cocotb code is separated from Caravel user project code.
 
 ### Spinal HDL and cocotb Code
 
 The Spinal HDL and cocotb code is located in [spinal-cocotb](./spinal-cocotb). Some important code files are:
 * [DmaController.scala](./spinal-cocotb/SpinalNet/src/main/scala/dma/DmaController.scala) is the DMA controller implemented in Spinal HDL;
 * [DmaMem.scala](./spinal-cocotb/SpinalNet/src/main/scala/dma/DmaMem.scala) is the top module that connect the DMA controller and the SDRAM controller;
-* [DmaControllerSim.scala](./spinal-cocotb/SpinalNet/src/main/scala/sdram/DmaControllerSim.scala) is the DMA controller simulation implemented in Spinal HDL;
+* [DmaControllerSim.scala](./spinal-cocotb/SpinalNet/src/main/scala/dma/DmaControllerSim.scala) is the DMA controller simulation implemented in Spinal HDL;
 * [SdramController.scala](./spinal-cocotb/SpinalNet/src/main/scala/sdram/SdramController.scala) is the SDRAM controller implemented in Spinal HDL;
-* [SdramControllerTest.py](./spinal-cocotb/SpinalNet/test/src/python/sdram/SdramControllerTest.py) is the SDRAM controller test bench implemented in cocotb.
+* [SdramControllerTest.py](./spinal-cocotb/SpinalNet/test/src/python/sdram_controller/SdramControllerTest.py) is the SDRAM controller test bench implemented in cocotb.
 
 To build and test the Spinal HDL code, there are two shell scripts:
 * [setup.sh](./spinal-cocotb/setup.sh) is the script to install the dependent libraries;
 * [run.sh](./spinal-cocotb/run.sh) is the script to build and run the Spinal HDL and cocotb code.
 
-The `run.sh` script will generate the Verilog code, [DmaMem.v](./spinal-cocotb/DmaMem.v), used in Caravel user project for post processing.
+The `run.sh` script will generate the Verilog code, `DmaMem.v`, under [spinal-cocotb](./spinal-cocotb), which is used in Caravel user project for post-processing.
 `DmaMem.v` will be moved to the Verilog code directory of the Caravel user project.
 
 ### Caravel Code
