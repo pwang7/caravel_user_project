@@ -62,7 +62,7 @@ set ::env(RUN_CVC) 0
 #set ::env(SYNTH_BUFFERING) 1
 
 # default AREA 0, try flow.tcl -synth_explore
-set ::env(SYNTH_STRATEGY) "DELAY 1"
+set ::env(SYNTH_STRATEGY) "DELAY 2"
 
 #set ::env(SYNTH_DRIVING_CELL) sky130_fd_sc_hc__inv_8
 
